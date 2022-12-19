@@ -1,0 +1,12 @@
+stages:
+  build_sqlite:
+    cmd: python src/1_create_sqlite.py
+    outs:
+      - cache/db.sqlite3
+  integrate_toxvaldb:
+    cmd: Rscript src/2_integrate_toxvaldb.R
+    deps: 
+      - src/2_build_model.R
+      - cache/train.csv
+    outs:
+      - brick/one_hot_triplet.hdf5
