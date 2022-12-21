@@ -2,9 +2,6 @@
 Chemharmony harmonizes some simple chemical properties.
 
 It reduces databases into three tables:
-1. substances - sid (a uuid), data (a description of the substance)
-2. properties - pid (a uuid), data (a description of the property)
-3. activities - aid (biobricks-refid), sid, pid, qualifier, units, value
 
 ```mermaid
 classDiagram

@@ -1,16 +1,19 @@
+# STORE `cache/toxvaldb` with `substances.parquet`, `properties.parquet`, and `activities.parquet`
 pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite)
 
 toxvaldb  <- biobricks::brick_load("toxvaldb")$toxvaldb.parquet |> collect()
+
 invisible(safely(fs::dir_delete)("cache/toxvaldb"))
 outputdir <- fs::dir_create("cache/toxvaldb",recurse=T)
 writeds  <- function(df,name){ arrow::write_dataset(df,fs::path(outputdir,name)) }
 
 # Export Chemicals ==============================================================
-tval <- toxvaldb |> group_by(dtxsid) |> mutate(cid = UUIDgenerate()) |> ungroup()
+tval <- toxvaldb |> group_by(dtxsid) |> mutate(sid = UUIDgenerate()) |> ungroup()
 
-substances <- tval |> select(cid, dtxsid, casrn, name) |> distinct() |>
-  nest(data=-cid) |> mutate(data = map_chr(data,~ jsonlite::toJSON(as.list(.),auto_unbox=T)))
+substances <- tval |> select(sid, dtxsid, casrn, name) |> distinct() |>
+  nest(data=-sid) |> mutate(data = map_chr(data,~ jsonlite::toJSON(as.list(.),auto_unbox=T)))
 
+# should be sid, data
 writeds(substances, "substances.parquet")
 
 # Export Properties ============================================================
