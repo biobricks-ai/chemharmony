@@ -1,16 +1,42 @@
 # chemharmony
 Chemharmony harmonizes some simple chemical properties.
-## Roadmap
 
-1. build three tables, substances, properties, activities for selected databases
-2. substances - sid (a uuid), data (a description of the substance)
-3. properties - pid (a uuid), data (a description of the property)
-4. activities - aid (biobricks-refid), sid, pid, qualifier, units, value
+It reduces databases into three tables:
+1. substances - sid (a uuid), data (a description of the substance)
+2. properties - pid (a uuid), data (a description of the property)
+3. activities - aid (biobricks-refid), sid, pid, qualifier, units, value
 
-## databases
+```mermaid
+classDiagram
+
+    class Substances{
+        - UUID sid
+        - JSON data
+    }
+
+    class Properties{
+        - UUID pid
+        - JSON data
+    }
+
+    class Activities{
+        - UUID aid 
+        - UUID sid
+        - UUID pid
+        + String qualifier
+        + String units
+        + String value
+    }
+
+    Activities --> Substances
+    Activities --> Properties
+
+```
+
+## TODO
 1. [ ] toxvaldb
 2. [ ] chembl
-3. [ ] ???
+3. [ ] tox21
 
 ## FAQ
 ### This schema seems limited. What about capturing metabolism data? Or dose response data? 
