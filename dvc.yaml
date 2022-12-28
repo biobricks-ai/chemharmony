@@ -1,8 +1,8 @@
 stages:
-  toxvald:
+  toxvaldb:
     cmd: Rscript src/1_integrate_toxvaldb.R
     deps: 
-      - src/1_integrate_toxvaldb.py
+      - src/1_integrate_toxvaldb.R
     outs:
       - cache/toxvaldb
   chembl:

@@ -1,7 +1,7 @@
 pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite)
 
-biobricks::brick_install("chembl")
-biobricks::brick_pull("chembl")
+# biobricks::brick_install("chembl")
+# biobricks::brick_pull("chembl")
 
 chembl  <- biobricks::brick_load("chembl")$parquet
 invisible(safely(fs::dir_delete)("cache/chembl"))

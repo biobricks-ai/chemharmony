@@ -1,0 +1,24 @@
+schema: '2.0'
+stages:
+  toxvaldb:
+    cmd: Rscript src/1_integrate_toxvaldb.R
+    deps:
+    - path: src/1_integrate_toxvaldb.R
+      md5: 061191c2918bdfb856a3f7ceb295de47
+      size: 2111
+    outs:
+    - path: cache/toxvaldb
+      md5: e0b2cc4e33c9b28e630da02dcd791e62.dir
+      size: 49376733
+      nfiles: 3
+  chembl:
+    cmd: Rscript src/2_integrate_chembl.R
+    deps:
+    - path: src/2_integrate_chembl.R
+      md5: 217a7e3a9812cbddd4296bd10a43a693
+      size: 2389
+    outs:
+    - path: cache/chembl
+      md5: 3e47f7ad7b6cc1eb932be850fcddfc40.dir
+      size: 718173282
+      nfiles: 3
