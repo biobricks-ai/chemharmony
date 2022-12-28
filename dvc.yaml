@@ -10,4 +10,4 @@ stages:
     deps: 
       - src/2_integrate_chembl.R
     outs:
-      - cache/toxvaldb
+      - cache/chembl
