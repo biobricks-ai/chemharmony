@@ -1,12 +1,13 @@
 stages:
-  build_sqlite:
-    cmd: python src/1_create_sqlite.py
-    outs:
-      - cache/db.sqlite3
-  integrate_toxvaldb:
-    cmd: Rscript src/2_integrate_toxvaldb.R
+  toxvald:
+    cmd: Rscript src/1_integrate_toxvaldb.py
     deps: 
-      - src/2_build_model.R
-      - cache/train.csv
+      - src/1_integrate_toxvaldb.py
     outs:
-      - brick/one_hot_triplet.hdf5
+      - cache/toxvaldb
+  chembl:
+    cmd: Rscript src/2_integrate_chembl.R
+    deps: 
+      - src/2_integrate_chembl.R
+    outs:
+      - cache/toxvaldb

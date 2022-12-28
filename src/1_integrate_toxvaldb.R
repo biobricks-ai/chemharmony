@@ -1,6 +1,9 @@
 # STORE `cache/toxvaldb` with `substances.parquet`, `properties.parquet`, and `activities.parquet`
 pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite)
 
+# biobricks::brick_install("toxvaldb")
+# biobricks::brick_pull("toxvaldb")
+
 toxvaldb  <- biobricks::brick_load("toxvaldb")$toxvaldb.parquet |> collect()
 
 invisible(safely(fs::dir_delete)("cache/toxvaldb"))
@@ -35,7 +38,7 @@ writeds(properties, "properties.parquet")
 activities = tval2 |> 
   mutate(source_id = row_number()) |>
   mutate(source_id = paste0("toxvaldb-toxvaldb.parquet",source_id)) |>
-  select(source_id, cid, pid, 
+  select(source_id, sid, pid, 
     qualifier=toxval_numeric_qualifier, units=toxval_units, value=toxval_numeric)
 
 writeds(activities, "activities.parquet")
