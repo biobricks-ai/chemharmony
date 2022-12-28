@@ -1,6 +1,6 @@
 stages:
   toxvald:
-    cmd: Rscript src/1_integrate_toxvaldb.py
+    cmd: Rscript src/1_integrate_toxvaldb.R
     deps: 
       - src/1_integrate_toxvaldb.py
     outs:
