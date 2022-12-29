@@ -11,3 +11,17 @@ stages:
       - src/2_integrate_chembl.R
     outs:
       - cache/chembl
+  tox21:
+    cmd: Rscript src/3_integrate_tox21.R
+    deps: 
+      - src/3_integrate_tox21.R
+    outs:
+      - cache/tox21
+  harmonization:
+    cmd: Rscript src/4_harmonization.R
+    deps: 
+      - cache/toxvaldb
+      - cache/chembl
+      - cache/tox21
+    outs:
+      - cache/harmonized
