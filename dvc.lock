@@ -1,0 +1,55 @@
+schema: '2.0'
+stages:
+  tox21:
+    cmd: Rscript src/3_integrate_tox21.R
+    deps:
+    - path: src/3_integrate_tox21.R
+      md5: cde13c442f6d839509031d90cfd06a74
+      size: 1904
+    outs:
+    - path: cache/tox21
+      md5: 065f2636430e1036613d54a60bcc9c47.dir
+      size: 56276519
+      nfiles: 3
+  chembl:
+    cmd: Rscript src/2_integrate_chembl.R
+    deps:
+    - path: src/2_integrate_chembl.R
+      md5: 2afdd55e96f65dd4f523dec4979b251b
+      size: 2440
+    outs:
+    - path: cache/chembl
+      md5: 50664e7ba3115070992a0daa1a4fa12f.dir
+      size: 719263619
+      nfiles: 3
+  toxvaldb:
+    cmd: Rscript src/1_integrate_toxvaldb.R
+    deps:
+    - path: src/1_integrate_toxvaldb.R
+      md5: bb4a897324ac529b034f2a8f2629f154
+      size: 2153
+    outs:
+    - path: cache/toxvaldb
+      md5: 602437a1041e15d6a9e7a345b865a37d.dir
+      size: 49373971
+      nfiles: 3
+  harmonization:
+    cmd: Rscript src/4_harmonization.R
+    deps:
+    - path: cache/chembl
+      md5: 50664e7ba3115070992a0daa1a4fa12f.dir
+      size: 719263619
+      nfiles: 3
+    - path: cache/tox21
+      md5: 065f2636430e1036613d54a60bcc9c47.dir
+      size: 56276519
+      nfiles: 3
+    - path: cache/toxvaldb
+      md5: 602437a1041e15d6a9e7a345b865a37d.dir
+      size: 49373971
+      nfiles: 3
+    outs:
+    - path: cache/harmonized
+      md5: 32b78adba6824a2b4a9aeb4c48703959.dir
+      size: 358062660
+      nfiles: 1
