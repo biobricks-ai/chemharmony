@@ -22,10 +22,11 @@ writeds <- function(df, name) {
 tox21chems <- tox21df |> group_by(SAMPLE_ID) |>
   mutate(sid = UUIDgenerate()) |> ungroup()
 
-substances <- tox21chems |> 
-  select(sid, SAMPLE_NAME, SAMPLE_ID, CAS, PUBCHEM_CID, SMILES, TOX21_ID) |> 
-  distinct() |> nest(data=-sid) |> mutate(data = 
-  map_chr(data,~ jsonlite::toJSON(as.list(.),auto_unbox=T)))
+substances <- tox21chems |>
+  select(sid, SAMPLE_NAME, SAMPLE_ID, CAS, PUBCHEM_CID, SMILES,
+  TOX21_ID) |>
+  distinct() |> nest(data = -sid) |> mutate(data =
+  map_chr(data, ~ jsonlite::toJSON(as.list(.), auto_unbox = TRUE)))
 
 writeds(substances, "substances.parquet")
 
