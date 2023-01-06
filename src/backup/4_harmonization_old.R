@@ -32,6 +32,8 @@ valid_casrn <- function(mystr) {
 
 toxvaldb <- open_dataset("./cache/toxvaldb/substances.parquet") |>
   collect()
+toxvaldb_act <- open_dataset("./cache/toxvaldb/activities.parquet") |>
+  collect()
 # nrow(toxvaldb)
 # head(toxvaldb)
 # toxvaldb[1, 2]
@@ -43,11 +45,15 @@ toxvaldb <- open_dataset("./cache/toxvaldb/substances.parquet") |>
 
 chembl <- open_dataset("./cache/chembl/substances.parquet") |>
   collect()
+chembl_act <- open_dataset("./cache/chembl/activities.parquet") |>
+  collect()
 # nrow(chembl)
 # head(chembl)
 # jsonlite::fromJSON(chembl[[1, 2]])
 
 tox21 <- open_dataset("./cache/tox21/substances.parquet") |>
+  collect()
+tox21_act <- open_dataset("./cache/tox21/activities.parquet") |>
   collect()
 # nrow(tox21)
 # head(tox21)

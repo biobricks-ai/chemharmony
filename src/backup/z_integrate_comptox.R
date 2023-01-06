@@ -1,10 +1,13 @@
 # STORE `cache/tox21` with `substances.parquet`, `properties.parquet`, and `activities.parquet`
 pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite)
 
-# biobricks::brick_install("tox21")
-# biobricks::brick_pull("tox21")
+biobricks::brick_install("pubchem")
+biobricks::brick_pull("pubchem")
+pubchem <- biobricks::brick_load("pubchem")
 
-tox21  <- biobricks::brick_load("tox21")
+biobricks::brick_install("comptox")
+biobricks::brick_pull("comptox")
+comptox <- biobricks::brick_load("comptox")
 
 tox21df <- tox21[[2]] |> collect()
 for (i in seq(from = 4, to = 154, by = 2)) {
@@ -49,7 +52,6 @@ writeds(properties, "properties.parquet")
 activities <- tox21props |>
   mutate(source_id = row_number()) |>
   mutate(source_id = paste0("tox21-tox21.parquet", source_id)) |>
-  mutate(qualifier = "=") |>
-  select(source_id, sid, pid, qualifier, value = AC50, smiles = SMILES)
+  select(source_id, sid, pid, qualifier = ASSAY_OUTCOME, value = AC50)
 
 writeds(activities, "activities.parquet")

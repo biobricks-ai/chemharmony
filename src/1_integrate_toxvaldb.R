@@ -50,3 +50,4 @@ activities <- tval2 |>
     units = toxval_units, value = toxval_numeric)
 
 writeds(activities, "activities.parquet")
+

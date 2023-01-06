@@ -1,4 +1,4 @@
-pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite, kit)
+pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite, kit, glue)
 
 invisible(safely(fs::dir_delete)("cache/harmonized"))
 outputdir <- fs::dir_create("cache/harmonized", recurse = TRUE)
@@ -16,6 +16,9 @@ colnames(toxvaldb) <- c("uuid", "dtxs_id", "casrn", "name")
 
 chembl <- open_dataset("./cache/chembl/substances.parquet") |>
   collect()
+chembl <- data.frame(lapply(chembl, function(x) {
+  gsub("null", "\"NA\"", x)
+}))
 chembl <- chembl %>% rowwise() %>%
   do(data.frame(sid = .$sid, fromJSON(as.character(.$data))))
 colnames(chembl) <- c("uuid", "molregno", "smiles",  "inchi")
@@ -42,3 +45,28 @@ harm <- merge(harm, chembl, by.x = "smiles",
   by.y = "smiles", all = TRUE, incomparables = NA)
 
 writeds(harm, "substances.parquet")
+
+#####################################################################
+# Harmonization activities
+toxvaldb_act <- open_dataset("./cache/toxvaldb/activities.parquet") |>
+  collect()
+glue("ToxValDB activities: {nrow(toxvaldb_act)}")
+tox21_act <- open_dataset("./cache/tox21/activities.parquet") |>
+  collect()
+glue("Tox21 activities: {nrow(tox21_act)}")
+chembl_act <- open_dataset("./cache/chembl/activities.parquet") |>
+  collect()
+glue("ChEMBL activities: {nrow(chembl_act)}")
+
+tox21_act_h <- tox21_act %>%
+  select(smiles, pid, value) %>%
+  filter(!is.na(value))
+
+chembl_act_h <- chembl_act %>%
+  select(smiles, pid, value) %>%
+  filter(!is.na(value))
+
+harm_act <- rbind(tox21_act_h, chembl_act_h)
+
+writeds(harm_act, "activities.parquet")
+
