@@ -1,4 +1,4 @@
-# STORE `cache/tox21` with `substances.parquet`, `properties.parquet`, and `activities.parquet`
+# STORE `brick/tox21` with `substances.parquet`, `properties.parquet`, and `activities.parquet`
 pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite)
 
 # biobricks::brick_install("tox21")
@@ -12,8 +12,8 @@ for (i in seq(from = 4, to = 154, by = 2)) {
   tox21df <- rbind(tox21df, df)
 }
 
-invisible(safely(fs::dir_delete)("cache/tox21"))
-outputdir <- fs::dir_create("cache/tox21", recurse = TRUE)
+invisible(safely(fs::dir_delete)("brick/tox21"))
+outputdir <- fs::dir_create("brick/tox21", recurse = TRUE)
 writeds <- function(df, name) {
   arrow::write_dataset(df, fs::path(outputdir, name))
 }

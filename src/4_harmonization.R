@@ -1,12 +1,12 @@
 pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite, kit, glue)
 
-invisible(safely(fs::dir_delete)("cache/harmonized"))
-outputdir <- fs::dir_create("cache/harmonized", recurse = TRUE)
+invisible(safely(fs::dir_delete)("brick/harmonized"))
+outputdir <- fs::dir_create("brick/harmonized", recurse = TRUE)
 writeds <- function(df, name) {
   arrow::write_dataset(df, fs::path(outputdir, name))
 }
 
-toxvaldb <- open_dataset("./cache/toxvaldb/substances.parquet") |>
+toxvaldb <- open_dataset("./brick/toxvaldb/substances.parquet") |>
   collect()
 ## Row 2912 in ToxValSB contains NULL values, not a substance
 toxvaldb <- toxvaldb[-2912, ]
@@ -14,7 +14,7 @@ toxvaldb <- toxvaldb %>% rowwise() %>%
   do(data.frame(sid = .$sid, fromJSON(as.character(.$data))))
 colnames(toxvaldb) <- c("uuid", "dtxs_id", "casrn", "name")
 
-chembl <- open_dataset("./cache/chembl/substances.parquet") |>
+chembl <- open_dataset("./brick/chembl/substances.parquet") |>
   collect()
 chembl <- data.frame(lapply(chembl, function(x) {
   gsub("null", "\"NA\"", x)
@@ -23,7 +23,7 @@ chembl <- chembl %>% rowwise() %>%
   do(data.frame(sid = .$sid, fromJSON(as.character(.$data))))
 colnames(chembl) <- c("uuid", "molregno", "smiles",  "inchi")
 
-tox21 <- open_dataset("./cache/tox21/substances.parquet") |>
+tox21 <- open_dataset("./brick/tox21/substances.parquet") |>
   collect()
 tox21 <- data.frame(lapply(tox21, function(x) {
   gsub("null", "\"NA\"", x)
@@ -48,13 +48,13 @@ writeds(harm, "substances.parquet")
 
 #####################################################################
 # Harmonization activities
-toxvaldb_act <- open_dataset("./cache/toxvaldb/activities.parquet") |>
+toxvaldb_act <- open_dataset("./brick/toxvaldb/activities.parquet") |>
   collect()
 glue("ToxValDB activities: {nrow(toxvaldb_act)}")
-tox21_act <- open_dataset("./cache/tox21/activities.parquet") |>
+tox21_act <- open_dataset("./brick/tox21/activities.parquet") |>
   collect()
 glue("Tox21 activities: {nrow(tox21_act)}")
-chembl_act <- open_dataset("./cache/chembl/activities.parquet") |>
+chembl_act <- open_dataset("./brick/chembl/activities.parquet") |>
   collect()
 glue("ChEMBL activities: {nrow(chembl_act)}")
 
