@@ -1,6 +1,9 @@
 # STORE `cache/toxvaldb` with `substances.parquet`, `properties.parquet`, and `activities.parquet`
 pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite)
 
+## pull data
+# Sys.setenv(BBLIB = "/mnt/biobricks")
+# biobricks::initialize()
 # biobricks::brick_install("toxvaldb")
 # biobricks::brick_pull("toxvaldb")
 
