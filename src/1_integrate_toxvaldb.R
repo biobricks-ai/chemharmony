@@ -1,4 +1,4 @@
-# STORE `cache/toxvaldb` with `substances.parquet`, `properties.parquet`, and `activities.parquet`
+# STORE `brick/toxvaldb` with `substances.parquet`, `properties.parquet`, and `activities.parquet`
 pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite)
 
 ## pull data
@@ -9,8 +9,8 @@ pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite)
 
 toxvaldb  <- biobricks::brick_load("toxvaldb")$toxvaldb.parquet |> collect()
 
-invisible(safely(fs::dir_delete)("cache/toxvaldb"))
-outputdir <- fs::dir_create("cache/toxvaldb", recurse = TRUE)
+invisible(safely(fs::dir_delete)("brick/toxvaldb"))
+outputdir <- fs::dir_create("brick/toxvaldb", recurse = TRUE)
 writeds <- function(df, name) {
   arrow::write_dataset(df, fs::path(outputdir, name))
 }
@@ -53,3 +53,4 @@ activities <- tval2 |>
     units = toxval_units, value = toxval_numeric)
 
 writeds(activities, "activities.parquet")
+

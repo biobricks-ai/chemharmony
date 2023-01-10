@@ -4,24 +4,24 @@ stages:
     deps: 
       - src/1_integrate_toxvaldb.R
     outs:
-      - cache/toxvaldb
+      - brick/toxvaldb
   chembl:
     cmd: Rscript src/2_integrate_chembl.R
     deps: 
       - src/2_integrate_chembl.R
     outs:
-      - cache/chembl
+      - brick/chembl
   tox21:
     cmd: Rscript src/3_integrate_tox21.R
     deps: 
       - src/3_integrate_tox21.R
     outs:
-      - cache/tox21
+      - brick/tox21
   harmonization:
     cmd: Rscript src/4_harmonization.R
     deps: 
-      - cache/toxvaldb
-      - cache/chembl
-      - cache/tox21
+      - brick/toxvaldb
+      - brick/chembl
+      - brick/tox21
     outs:
-      - cache/harmonized
+      - brick/harmonized

@@ -4,52 +4,52 @@ stages:
     cmd: Rscript src/3_integrate_tox21.R
     deps:
     - path: src/3_integrate_tox21.R
-      md5: cde13c442f6d839509031d90cfd06a74
-      size: 1904
+      md5: 5807df4ad595d4afd01686108ceebc3a
+      size: 1942
     outs:
-    - path: cache/tox21
-      md5: 065f2636430e1036613d54a60bcc9c47.dir
-      size: 56276519
+    - path: brick/tox21
+      md5: bbfe36a11a212a561afa1a78491d9e97.dir
+      size: 59481178
       nfiles: 3
   chembl:
     cmd: Rscript src/2_integrate_chembl.R
     deps:
     - path: src/2_integrate_chembl.R
-      md5: 2afdd55e96f65dd4f523dec4979b251b
-      size: 2440
+      md5: 11f1e45bfad8069d955b44276e5a7ac5
+      size: 3051
     outs:
-    - path: cache/chembl
-      md5: 50664e7ba3115070992a0daa1a4fa12f.dir
-      size: 719263619
+    - path: brick/chembl
+      md5: 2ce461d3e06904e77ce09f618a882d0b.dir
+      size: 913662455
       nfiles: 3
   toxvaldb:
     cmd: Rscript src/1_integrate_toxvaldb.R
     deps:
     - path: src/1_integrate_toxvaldb.R
-      md5: bb4a897324ac529b034f2a8f2629f154
-      size: 2153
+      md5: 034795dbbeaaae1f00405d6d1a1ef726
+      size: 2154
     outs:
-    - path: cache/toxvaldb
-      md5: 602437a1041e15d6a9e7a345b865a37d.dir
-      size: 49373971
+    - path: brick/toxvaldb
+      md5: 56ede93a1b24152a72ffef25786a0e4e.dir
+      size: 49370677
       nfiles: 3
   harmonization:
     cmd: Rscript src/4_harmonization.R
     deps:
-    - path: cache/chembl
-      md5: 50664e7ba3115070992a0daa1a4fa12f.dir
-      size: 719263619
+    - path: brick/chembl
+      md5: 2ce461d3e06904e77ce09f618a882d0b.dir
+      size: 913662455
       nfiles: 3
-    - path: cache/tox21
-      md5: 065f2636430e1036613d54a60bcc9c47.dir
-      size: 56276519
+    - path: brick/tox21
+      md5: bbfe36a11a212a561afa1a78491d9e97.dir
+      size: 59481178
       nfiles: 3
-    - path: cache/toxvaldb
-      md5: 602437a1041e15d6a9e7a345b865a37d.dir
-      size: 49373971
+    - path: brick/toxvaldb
+      md5: 56ede93a1b24152a72ffef25786a0e4e.dir
+      size: 49370677
       nfiles: 3
     outs:
-    - path: cache/harmonized
-      md5: 32b78adba6824a2b4a9aeb4c48703959.dir
-      size: 358062660
-      nfiles: 1
+    - path: brick/harmonized
+      md5: f76fa3f308c263b7254eceab05559269.dir
+      size: 561782937
+      nfiles: 2
