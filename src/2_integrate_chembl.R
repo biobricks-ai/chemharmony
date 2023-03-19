@@ -1,19 +1,14 @@
 pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite)
 
-# biobricks::brick_install("chembl")
-# biobricks::brick_pull("chembl")
-
-chembl  <- biobricks::brick_load("chembl")$parquet
-invisible(safely(fs::dir_delete)("brick/chembl"))
-outputdir <- fs::dir_create("brick/chembl", recurse = TRUE)
-writeds <- function(df, name) {
-  arrow::write_dataset(df, fs::path(outputdir, name))
-}
+chembl  <- biobricks::bbload("chembl")
+out <- fs::dir_create("staging/chembl", recurse = TRUE)
+writeds <- \(df, name) { arrow::write_dataset(df, fs::path(out, name)) }
+uuid <- uuid::UUIDgenerate
 
 # Export Chemicals =====================================================
-compound <- chembl$compound_structures.parquet |>
+compound <- chembl$compound_structures |> head(100) |>
   select(molregno, canonical_smiles, standard_inchi) |> collect() |>
-  group_by(molregno) |> mutate(sid = UUIDgenerate()) |> ungroup()
+  group_by(molregno) |> mutate(sid = uuid()) |> ungroup()
 
 substances <- compound |>
   select(sid, molregno, canonical_smiles, standard_inchi) |>
@@ -23,7 +18,8 @@ substances <- compound |>
 writeds(substances, "substances.parquet")
 
 # Export Properties ===================================================
-assay  <- chembl$assays.parquet |> collect() |> 
+
+assay  <- chembl$assays |> collect() |> 
   group_by(assay_id) |> mutate(pid = UUIDgenerate()) |> ungroup() |>
   select(pid, assay_id,assay_desc=description)
 
@@ -38,6 +34,7 @@ activity <- chembl$activities.parquet |> collect()
 compound_smi <- chembl$compound_structures.parquet %>%
   select(molregno, canonical_smiles) %>%
   collect()
+
 compound_smi <- compound_smi %>%
   column_to_rownames(var = "molregno")
 
@@ -64,22 +61,5 @@ activity <- activity |>
 train <- activity |> filter(standard_relation == "=") |> collect() |>
   select(sid, pid, qualifier = standard_relation,
   units = standard_units, value = standard_value, smiles)
-
-# activities <- activity |>
-#   filter(!is.na(standard_value)) |>
-#   filter(nchar(canonical_smiles) < 200) |>
-#   filter(!grepl("[+-.]", canonical_smiles)) |>
-#   group_by(standard_type) |>
-#   filter(n() > 1000) |> # only keep properties with 1000+ examples
-#   mutate(med_prop_val = median(standard_value)) |>
-#   ungroup() |>
-#   mutate(stype = factor(standard_type,
-#     levels = unique(standard_type))) |>
-#   mutate(property_id = as.numeric(stype)) |>
-#   mutate(value = array(ifelse(standard_value > med_prop_val, 1L,
-#     0L))) |>
-#   mutate(activity_id = row_number()) |>
-#   select(activity_id, stype, property_id, canonical_smiles,
-#   standard_value, med_prop_val, value)
 
 writeds(train, "activities.parquet")

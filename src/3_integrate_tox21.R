@@ -1,58 +1,50 @@
 # STORE `brick/tox21` with `substances.parquet`, `properties.parquet`, and `activities.parquet`
 pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite)
 
-## pull data
-# Sys.setenv(BBLIB = "/mnt/biobricks")
-# biobricks::initialize()
-# biobricks::brick_install("tox21")
-# biobricks::brick_pull("tox21")
+# tox21 easily fits in memory
+tox21 <- biobricks::bbload("tox21")
+toxraw <- tox21$tox21 |> collect()
+toxlib <- tox21$tox21lib |> collect() # substance identifiers
+toxagg <- tox21$tox21_aggregated |> collect()
 
-tox21  <- biobricks::brick_load("tox21")
+# write tox21 to staging and later merge it
+stg <- fs::dir_create("staging")
 
-tox21df <- tox21[[2]] |> collect()
-for (i in seq(from = 4, to = 154, by = 2)) {
-  df <- tox21[[i]] |> collect()
-  tox21df <- rbind(tox21df, df)
-}
+# Export Chemicals ============================================================
+uid <- UUIDgenerate
+sub <- toxlib |> group_by(SAMPLE_ID) |> mutate(sid = uid()) |> ungroup()
+subjson <- sub |> 
+  select(sid, SAMPLE_NAME, SAMPLE_ID, CAS, PUBCHEM_CID, SMILES, TOX21_ID) |>
+  distinct() |> nest(data = -sid) |> 
+  mutate(data = map_chr(data, ~ jsonlite::toJSON(as.list(.), auto_unbox = TRUE)))
 
-invisible(safely(fs::dir_delete)("brick/tox21"))
-outputdir <- fs::dir_create("brick/tox21", recurse = TRUE)
-writeds <- function(df, name) {
-  arrow::write_dataset(df, fs::path(outputdir, name))
-}
-
-# Export Chemicals ====================================================
-tox21chems <- tox21df |> group_by(SAMPLE_ID) |>
-  mutate(sid = UUIDgenerate()) |> ungroup()
-
-substances <- tox21chems |>
-  select(sid, SAMPLE_NAME, SAMPLE_ID, CAS, PUBCHEM_CID, SMILES,
-  TOX21_ID) |>
-  distinct() |> nest(data = -sid) |> mutate(data =
-  map_chr(data, ~ jsonlite::toJSON(as.list(.), auto_unbox = TRUE)))
-
-writeds(substances, "substances.parquet")
-
+arrow::write_parquet(subjson, fs::path(stg,"substances.tox21.parquet"))
 
 # Export Properties ====================================================
-pcols <- c("PROTOCOL_NAME", "SAMPLE_DATA_TYPE", "ASSAY_OUTCOME",
-  "CHANNEL_OUTCOME", "AC50", "EFFICACY", "REPRODUCIBILITY",
-  "CURVE_RANK", "FLAG")
+pcols <- c("PROTOCOL_NAME")
 
-tox21props <- tox21chems |> group_by(!!!syms(pcols)) |>
-  mutate(pid = UUIDgenerate()) |> ungroup()
+props <- toxraw |> group_by(!!!syms(pcols)) |> mutate(pid = uid()) |> ungroup()
+propjson <- props |> select(pid, !!!syms(pcols)) |> distinct() |> nest(data = -pid) 
+propjson$data <- map_chr(propjson$data, ~ jsonlite::toJSON(as.list(.), auto_unbox = T))
 
-properties <- tox21props |> select(pid, !!!syms(pcols)) |> distinct() |>
-  nest(data = -pid) |> mutate(data =
-  map_chr(data, ~ jsonlite::toJSON(as.list(.), auto_unbox = T )))
-
-writeds(properties, "properties.parquet")
+arrow::write_parquet(propjson, fs::path(stg,"properties.tox21.parquet"))
 
 # Export Activities ====================================================
-activities <- tox21props |>
+
+# get the inactive/agonist/antagonist list
+legal_outcomes <- c("active agonist", "active antagonist", "inactive")
+acts <- toxraw |> filter(ASSAY_OUTCOME %in% legal_outcomes)
+acts <- acts |> select(SAMPLE_ID, PROTOCOL_NAME, ASSAY_OUTCOME)
+
+subsid <- sub |> select(SAMPLE_ID, sid, SMILES) |> distinct()
+acts <- acts |> inner_join(subsid, by="SAMPLE_ID")
+
+proppid <- props |> select(PROTOCOL_NAME, pid) |> distinct()
+acts <- acts |> inner_join(proppid, by="PROTOCOL_NAME")
+
+activities <- acts |>
   mutate(source_id = row_number()) |>
   mutate(source_id = paste0("tox21-tox21.parquet", source_id)) |>
-  mutate(qualifier = "=") |>
-  select(source_id, sid, pid, qualifier, value = AC50, smiles = SMILES)
+  select(source_id, sid, pid, value=ASSAY_OUTCOME, smiles=SMILES)
 
-writeds(activities, "activities.parquet")
+arrow::write_parquet(activities, fs::path(stg,"activities.tox21.parquet"))

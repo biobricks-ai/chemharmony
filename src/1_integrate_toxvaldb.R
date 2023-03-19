@@ -1,56 +1,59 @@
-# STORE `brick/toxvaldb` with `substances.parquet`, `properties.parquet`, and `activities.parquet`
 pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite)
 
+stg <- fs::dir_create("staging/toxvaldb")
+uid <- UUIDgenerate
+toJ <- purrr::partial(jsonlite::toJSON, auto_unbox = TRUE)
+
 ## pull data
-# Sys.setenv(BBLIB = "/mnt/biobricks")
-# biobricks::initialize()
-# biobricks::brick_install("toxvaldb")
-# biobricks::brick_pull("toxvaldb")
+toxvaldb <- biobricks::bbload("toxvaldb")$toxvaldb |> collect()
+comptox  <- biobricks::bbload("comptox")$dsstox_identifiers |> collect()
 
-toxvaldb  <- biobricks::brick_load("toxvaldb")$toxvaldb.parquet |> collect()
+tval <- toxvaldb |> group_by(dtxsid) |> mutate(sid = uid()) |> ungroup()
+tval <- tval |> inner_join(comptox, by = "dtxsid") |> filter(!is.na(inchi))
 
-invisible(safely(fs::dir_delete)("brick/toxvaldb"))
-outputdir <- fs::dir_create("brick/toxvaldb", recurse = TRUE)
-writeds <- function(df, name) {
-  arrow::write_dataset(df, fs::path(outputdir, name))
-}
+# props <- c("toxval_type", "toxval_type_original", "toxval_subtype",
+#   "toxval_subtype_original", "toxval_type_category",
+#   "toxval_type_supercategory", "risk_assessment_class",
+#   "study_type", "study_duration_class", "study_duration_value",
+#   "species_common", "species_supercategory",
+#   "habitat", "human_eco", "strain", "sex", "generation", "lifestage",
+#   "exposure_route", "exposure_method", "exposure_form", "media",
+#   "media_original", "critical_effect", "critical_effect_original",
+#   "toxval_units")
+
+# print_table <- function(df, n = 10) {
+#   seq(1,ncol(df),10) |> walk(\(i){
+#     print(df[,i:min(ncol(df),(i+9))] |> sample_n(10), n=10)
+#   })
+# }
+
+props <- c("risk_assessment_class", "species_supercategory",
+  "exposure_route", "toxval_type_category",
+  "toxval_units")
+
+tval <- tval |> filter(toxval_numeric_qualifier == "=", qa_status==1)
+tval <- tval |> select(sid, dtxsid, inchi, all_of(props), value=toxval_numeric)
+tval <- tval |> group_by(!!!syms(props)) |> mutate(pid = uid()) |> ungroup()
+tval <- tval |> group_by(sid,pid) |> mutate(value=median(value)) |> ungroup() |> distinct()
+tval <- tval |> group_by(pid) |> filter(n() > 500) |> ungroup()
+tval <- tval |> group_by(pid) |> 
+  mutate(value = sprintf("quartile_%s",ntile(value,4))) |> ungroup() 
 
 # Export Chemicals ====================================================
-tval <- toxvaldb |> group_by(dtxsid) |> mutate(sid = UUIDgenerate()) |>
-  ungroup()
+substances <- tval |> 
+  select(sid, dtxsid, inchi) |> distinct() |>
+  nest(data = -sid) |> mutate(data = map_chr(data, ~ toJ(as.list(.))))
 
-substances <- tval |> select(sid, dtxsid, casrn, name) |> distinct() |>
-  nest(data = -sid) |> mutate(data =
-  map_chr(data, ~ jsonlite::toJSON(as.list(.), auto_unbox = TRUE)))
-
-# should be sid, data
-writeds(substances, "substances.parquet")
+arrow::write_parquet(substances, fs::path(stg, "substances.parquet"))
 
 # Export Properties ====================================================
-pcols <- c("toxval_type", "toxval_type_original", "toxval_subtype",
-  "toxval_subtype_original", "toxval_type_category",
-  "toxval_type_supercategory", "risk_assessment_class",
-  "study_type", "study_duration_class", "study_duration_value",
-  "species_common", "species_supercategory",
-  "habitat", "human_eco", "strain", "sex", "generation", "lifestage",
-  "exposure_route", "exposure_method", "exposure_form", "media",
-  "media_original", "critical_effect", "critical_effect_original")
+properties <- tval |> select(pid, all_of(props)) |> distinct() |>
+  nest(data = -pid) |> mutate(data = map_chr(data, ~ toJ(as.list(.))))
 
-tval2 <- tval |> group_by(!!!syms(pcols)) |>
-  mutate(pid = UUIDgenerate()) |> ungroup()
-
-properties <- tval2 |> select(pid, !!!syms(pcols)) |> distinct() |>
-  nest(data = -pid) |> mutate(data =
-  map_chr(data, ~ jsonlite::toJSON(as.list(.), auto_unbox = TRUE)))
-
-writeds(properties, "properties.parquet")
+arrow::write_parquet(properties, fs::path(stg,"properties.parquet"))
 
 # Export Activities ====================================================
-activities <- tval2 |>
-  mutate(source_id = row_number()) |>
-  mutate(source_id = paste0("toxvaldb-toxvaldb.parquet", source_id)) |>
-  select(source_id, sid, pid, qualifier = toxval_numeric_qualifier,
-    units = toxval_units, value = toxval_numeric)
+acts <- tval |> mutate(aid = paste0("toxvaldb-",row_number()))
+acts <- acts |> select(aid, sid, pid, inchi, value)
 
-writeds(activities, "activities.parquet")
-
+arrow::write_parquet(acts, "activities.parquet")
