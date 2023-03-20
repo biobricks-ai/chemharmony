@@ -1,4 +1,3 @@
-/toxvaldb
-/chembl
-/tox21
-/harmonized
+/substances.parquet
+/properties.parquet
+/activities.parquet

@@ -4,24 +4,42 @@ stages:
     deps: 
       - src/1_integrate_toxvaldb.R
     outs:
-      - brick/toxvaldb
+      - staging/toxvaldb
   chembl:
     cmd: Rscript src/2_integrate_chembl.R
     deps: 
       - src/2_integrate_chembl.R
     outs:
-      - brick/chembl
+      - staging/chembl
   tox21:
     cmd: Rscript src/3_integrate_tox21.R
     deps: 
       - src/3_integrate_tox21.R
     outs:
-      - brick/tox21
-  harmonization:
-    cmd: Rscript src/4_harmonization.R
+      - staging/tox21
+  toxcast:
+    cmd: Rscript src/4_integrate_toxcast.R
     deps: 
-      - brick/toxvaldb
-      - brick/chembl
-      - brick/tox21
+      - src/4_integrate_toxcast.R
     outs:
-      - brick/harmonized
+      - staging/toxcast
+  reach:
+    cmd: Rscript src/5_integrate_reach.R
+    deps: 
+      - src/5_integrate_reach.R
+    outs:
+      - staging/reach
+  ice:
+    cmd: Rscript src/6_integrate_ice.R
+    deps: 
+      - src/6_integrate_ice.R
+    outs:
+      - staging/ice
+  harmonize:
+    cmd: Rscript src/9_harmonization.R
+    deps: 
+      - src/9_harmonization.R
+    outs:
+      - brick/substances.parquet
+      - brick/properties.parquet
+      - brick/activities.parquet

@@ -2,64 +2,47 @@ pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite)
 
 chembl  <- biobricks::bbload("chembl")
 out <- fs::dir_create("staging/chembl", recurse = TRUE)
-writeds <- \(df, name) { arrow::write_dataset(df, fs::path(out, name)) }
 uuid <- uuid::UUIDgenerate
+toJ <- purrr::partial(jsonlite::toJSON, auto_unbox = TRUE)
+
+# make substance id sid
+cmp <- chembl$compound_structures |> collect() |> 
+  group_by(molregno) |> mutate(sid = uuid()) |> ungroup() |>
+  select(sid, molregno, inchi=standard_inchi)
+
+# make activities
+act <- chembl$activities |> collect() |> inner_join(cmp, by="molregno")
+act <- act |> filter(!is.na(standard_value), standard_relation=="=", standard_flag==1)
+act <- act |> select(sid, molregno, inchi, 
+  assay_id, standard_type, type, bao_endpoint, units=standard_units, 
+  value = standard_value)
+
+# make property id 'pid'
+props <- c("assay_id","standard_type","type","bao_endpoint","units")
+act <- act |> group_by(!!!syms(props)) |> mutate(pid = uuid()) |> ungroup()
+
+# set repeated measures to the median value and then to property quartile
+act <- act |> group_by(across(c(-value))) |> summarize(value=median(value)) |> ungroup() 
+act <- act |> group_by(pid) |> mutate(value = sprintf("quartile_%s",ntile(value,4))) |> ungroup() 
+
+# remove properties with less than 1000 values
+act <- act |> group_by(pid) |> filter(n()>1000) |> ungroup()
 
 # Export Chemicals =====================================================
-compound <- chembl$compound_structures |> head(100) |>
-  select(molregno, canonical_smiles, standard_inchi) |> collect() |>
-  group_by(molregno) |> mutate(sid = uuid()) |> ungroup()
+substances <- act |> select(sid, molregno, inchi) |> distinct() |> 
+  nest(data = -sid) |> mutate(data = map_chr(data, ~ toJ(as.list(.))))
 
-substances <- compound |>
-  select(sid, molregno, canonical_smiles, standard_inchi) |>
-  distinct() |> nest(data = -sid) |> mutate(data =
-  map_chr(data, ~ jsonlite::toJSON(as.list(.), auto_unbox = TRUE)))
-
-writeds(substances, "substances.parquet")
+arrow::write_dataset(substances, fs::path(out,"substances.parquet"))
 
 # Export Properties ===================================================
+properties <- act |> select(pid,all_of(props)) |> distinct() |>
+  nest(data = -pid) |> mutate(data = map_chr(data, ~ toJ(as.list(.))))
 
-assay  <- chembl$assays |> collect() |> 
-  group_by(assay_id) |> mutate(pid = UUIDgenerate()) |> ungroup() |>
-  select(pid, assay_id,assay_desc=description)
-
-properties <- assay |> distinct() |>
-  nest(data = -pid) |> mutate(data =
-  map_chr(data, ~ jsonlite::toJSON(as.list(.), auto_unbox = TRUE)))
-
-writeds(properties, "properties.parquet")
+arrow::write_dataset(properties, fs::path(out,"properties.parquet"))
 
 # Export Activities ============================================================
-activity <- chembl$activities.parquet |> collect()
-compound_smi <- chembl$compound_structures.parquet %>%
-  select(molregno, canonical_smiles) %>%
-  collect()
+activities <- act |> 
+  mutate(aid = paste0("chembl-", row_number())) |>
+  select(aid, sid, pid, inchi, value)
 
-compound_smi <- compound_smi %>%
-  column_to_rownames(var = "molregno")
-
-spawn_progressbar <- function(x, .name = .pb, .times = 1) {
-  .name <- substitute(.name)
-  n <- nrow(x) * .times
-  eval(substitute(.name <<- dplyr::progress_estimated(n)))
-  x
-}
-get_smiles <- function(x, df, .pb) {
-  .pb$tick()$print()
-  df[x, ]
-}
-activity <- activity %>%
-  group_by(molregno) %>%
-  spawn_progressbar(.times = 0.18) %>%
-  mutate(smiles = get_smiles(molregno, compound_smi, .pb)) %>%
-  ungroup()
-
-activity <- activity |>
-  inner_join(assay, by = "assay_id") |>
-  inner_join(compound, by = "molregno")
-
-train <- activity |> filter(standard_relation == "=") |> collect() |>
-  select(sid, pid, qualifier = standard_relation,
-  units = standard_units, value = standard_value, smiles)
-
-writeds(train, "activities.parquet")
+arrow::write_dataset(activities, fs::path(out,"activities.parquet"))

@@ -1,55 +1,87 @@
 schema: '2.0'
 stages:
-  tox21:
-    cmd: Rscript src/3_integrate_tox21.R
+  reach:
+    cmd: Rscript src/5_integrate_reach.R
     deps:
-    - path: src/3_integrate_tox21.R
-      md5: 5807df4ad595d4afd01686108ceebc3a
-      size: 1942
+    - path: src/5_integrate_reach.R
+      md5: 2dc59fabfc4d79526875ba2cc1d1fa35
+      size: 1953
     outs:
-    - path: brick/tox21
-      md5: bbfe36a11a212a561afa1a78491d9e97.dir
-      size: 59481178
+    - path: staging/reach
+      md5: 6a8382ac78e01f459157fee7a655051e.dir
+      size: 1452504
+      nfiles: 3
+  toxcast:
+    cmd: Rscript src/4_integrate_toxcast.R
+    deps:
+    - path: src/4_integrate_toxcast.R
+      md5: c0be8261798d09bb7b71c8dbfe7d92b0
+      size: 1944
+    outs:
+    - path: staging/toxcast
+      md5: 9286f20fe9dcfc03e40bbd4a7309ad47.dir
+      size: 20412591
       nfiles: 3
   chembl:
     cmd: Rscript src/2_integrate_chembl.R
     deps:
     - path: src/2_integrate_chembl.R
-      md5: 11f1e45bfad8069d955b44276e5a7ac5
-      size: 3051
+      md5: d01ecc3d753ec3fda6f6705814953fc8
+      size: 2111
     outs:
-    - path: brick/chembl
-      md5: 2ce461d3e06904e77ce09f618a882d0b.dir
-      size: 913662455
+    - path: staging/chembl
+      md5: 1ff74b3dc1fa4bc0888ec846615bc4ff.dir
+      size: 160938718
       nfiles: 3
   toxvaldb:
     cmd: Rscript src/1_integrate_toxvaldb.R
     deps:
     - path: src/1_integrate_toxvaldb.R
-      md5: 034795dbbeaaae1f00405d6d1a1ef726
-      size: 2154
+      md5: 868a5fb55e5042305cf1c26ca9a9d6f7
+      size: 2588
     outs:
-    - path: brick/toxvaldb
-      md5: 56ede93a1b24152a72ffef25786a0e4e.dir
-      size: 49370677
+    - path: staging/toxvaldb
+      md5: d24b4126d6c5a021e1da51d4939f2ef2.dir
+      size: 4416765
       nfiles: 3
-  harmonization:
-    cmd: Rscript src/4_harmonization.R
+  ice:
+    cmd: Rscript src/6_integrate_ice.R
     deps:
-    - path: brick/chembl
-      md5: 2ce461d3e06904e77ce09f618a882d0b.dir
-      size: 913662455
-      nfiles: 3
-    - path: brick/tox21
-      md5: bbfe36a11a212a561afa1a78491d9e97.dir
-      size: 59481178
-      nfiles: 3
-    - path: brick/toxvaldb
-      md5: 56ede93a1b24152a72ffef25786a0e4e.dir
-      size: 49370677
-      nfiles: 3
+    - path: src/6_integrate_ice.R
+      md5: 5dd39454cb54a8ec3b9d227e30490c16
+      size: 3347
     outs:
-    - path: brick/harmonized
-      md5: f76fa3f308c263b7254eceab05559269.dir
-      size: 561782937
-      nfiles: 2
+    - path: staging/ice
+      md5: e41b3a3ddc20fe1a3eda1c0fa04c4ea6.dir
+      size: 12425302
+      nfiles: 3
+  tox21:
+    cmd: Rscript src/3_integrate_tox21.R
+    deps:
+    - path: src/3_integrate_tox21.R
+      md5: b146ca6850ff29a91d12d7ad9d9bd3dc
+      size: 2978
+    outs:
+    - path: staging/tox21
+      md5: e395e84634736b08bae248454684f7cc.dir
+      size: 4066262
+      nfiles: 3
+  harmonize:
+    cmd: Rscript src/9_harmonization.R
+    deps:
+    - path: src/9_harmonization.R
+      md5: 877ab58c9f6441cb8896bf0ef7f9ecbd
+      size: 1838
+    outs:
+    - path: brick/activities.parquet
+      md5: 37f7e912960ae6d349de048fe8bf9e59.dir
+      size: 123898386
+      nfiles: 6
+    - path: brick/properties.parquet
+      md5: 4401e827390f993818feb54177916314.dir
+      size: 159088
+      nfiles: 1
+    - path: brick/substances.parquet
+      md5: a7a4f2c4d40f5c9f3f463e33f95d5775.dir
+      size: 78170563
+      nfiles: 1

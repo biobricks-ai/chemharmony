@@ -56,4 +56,4 @@ arrow::write_parquet(properties, fs::path(stg,"properties.parquet"))
 acts <- tval |> mutate(aid = paste0("toxvaldb-",row_number()))
 acts <- acts |> select(aid, sid, pid, inchi, value)
 
-arrow::write_parquet(acts, "activities.parquet")
+arrow::write_parquet(acts, fs::path(stg,"activities.parquet"))

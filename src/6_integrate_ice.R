@@ -60,15 +60,13 @@ arrow::write_parquet(subjson, fs::path(stg,"substances.parquet"))
 
 # Export Properties ====================================================
 propjson <- iceb |> select(pid, Assay, Endpoint, Units) |> distinct() |> nest(data = -pid) |>
-  mutate(data = map_chr(propjson$data, ~ jsonlite::toJSON(as.list(.), auto_unbox = T)))
+  mutate(data = map_chr(data, ~ jsonlite::toJSON(as.list(.), auto_unbox = T)))
 
 arrow::write_parquet(propjson, fs::path(stg,"properties.parquet"))
 
 # Export Activities ====================================================
-
 activities <- iceb |>
-  mutate(source_id = row_number()) |>
-  mutate(source_id = paste0("ice", source_id)) |>
-  select(source_id, sid, pid, inchi, value=Response)
+  mutate(aid = paste0("ice-", row_number())) |>
+  select(aid, sid, pid, inchi, value=Response)
 
 arrow::write_parquet(activities, fs::path(stg,"activities.parquet"))
