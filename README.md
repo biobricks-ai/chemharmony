@@ -20,8 +20,8 @@ classDiagram
         - UUID aid 
         - UUID sid
         - UUID pid
-        + String qualifier
-        + String units
+        + String inchi
+        + String smiles
         + String value
     }
 
@@ -29,11 +29,6 @@ classDiagram
     Activities --> Properties
 
 ```
-
-## TODO
-1. [ ] toxvaldb
-2. [ ] chembl
-3. [ ] tox21
 
 ## FAQ
 ### This schema seems limited. What about capturing metabolism data? Or dose response data? 
