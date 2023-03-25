@@ -67,21 +67,25 @@ stages:
       size: 4066262
       nfiles: 3
   harmonize:
-    cmd: Rscript src/9_harmonization.R
+    cmd: Rscript src/7_harmonization.R
     deps:
-    - path: src/9_harmonization.R
-      md5: 0941dac094e2dd7d4b0def9c73b9e2d8
-      size: 2351
+    - path: src/7_harmonization.R
+      md5: 46c57e100bc6e929ae0d963c9eaa218c
+      size: 2733
+    - path: staging
+      md5: 8f694ce8ec07024fe75a28ba2129fe54.dir
+      size: 203712187
+      nfiles: 19
     outs:
     - path: brick/activities.parquet
-      md5: a28d666abc15c0e141e2f2bd77b7456e.dir
-      size: 141684708
-      nfiles: 6
+      md5: cf3ce1c762ed3679042c986cf1711494.dir
+      size: 1169361476
+      nfiles: 16
     - path: brick/properties.parquet
-      md5: 99f31d0bf32dc6ba09e2a0baa1d3214e.dir
-      size: 159075
+      md5: 9b6fd0610265e962533333084c8fded6.dir
+      size: 159082
       nfiles: 1
     - path: brick/substances.parquet
-      md5: f9ae32d88eb59ccee9c54dcc2be97265.dir
+      md5: d3a0bdcc1f9632d2fcf66a8947053394.dir
       size: 78170570
       nfiles: 1
