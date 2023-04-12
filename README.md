@@ -21,7 +21,6 @@ classDiagram
         - UUID sid
         - UUID pid
         + String inchi
-        + String smiles
         + String value
     }
 

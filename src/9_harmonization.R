@@ -22,15 +22,6 @@ purrr::walk(parquets, \(file){
 
 activities <- arrow::open_dataset("staging/activities.parquet") |> collect() |> distinct()
 
-# create binary_value to indicate that given sid as given property + value (or not)
-a <- activities |> group_by(pid) |> expand(nesting(sid,inchi,smiles),value) |> ungroup() 
-a <- a |> 
-  left_join(activities, by=c("pid","sid","inchi","smiles","value")) |>
-  mutate(binary_value = ifelse(is.na(aid), 0, 1)) |>
-  mutate(aid = map_chr(aid, ~ uuid::UUIDgenerate()))
-
-a |> arrow::write_dataset("brick/activities.parquet", max_rows_per_file = 1e6)
-
 # SUBSTANCES =============================================================
 parquets <- fs::dir_ls("staging", recurse=T, glob="*/substances.parquet")
 outdir <- fs::dir_create("staging/substances.parquet")
