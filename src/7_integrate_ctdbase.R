@@ -1,16 +1,33 @@
-pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite, kit, glue)
+pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite, kit, glue, httr)
 
 ctd <- biobricks::bbload("ctdbase")
 
 # chemicals
 chem <- ctd$CTD_chemicals |> collect()
 chem <- chem |> filter(!is.na(CasRN)) |> collect()
+nrow(chem)
 
-pcc <- biobricks::bbload("pubchem")$compound_sdf
-pcinchi <- pcc |> filter(property=="PUBCHEM_IUPAC_INCHI") |> select(id,inchi = value)
-pccasrn <- pcc |> filter(property=="PUBCHEM_IUPAC_CAS_NAME") |> select(id,casrn = value)
-pccasrn <- pccasrn |> filter(casrn %in% chem$CasRN)
-pcc <- pccasrn |> inner_join(pcinchi, by="id") |> collect()
+# look up chemicals by their mesh id on pubchem
+get_cids_from_cas <- function(cas_number) {
+  base_url <- "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/"
+  url <- paste0(base_url, cas_number, "/cids/json")
+  response <- GET(url)
+  httr::set_config(httr::config(http_version = 0))
+  
+  if (http_status(response)$category != "Success") {
+    return(NA)
+  }
+  
+  content <- content(response, as = "text", encoding = "UTF-8")
+  json_data <- fromJSON(content, simplifyVector = TRUE)
+  
+  # sleep 300ms
+  Sys.sleep(0.3)
+  return(json_data$IdentifierList$CID)
+}
+get_cids_from_cas <- purrr::possibly(get_cids_from_cas, otherwise = NA_integer_)
+cids <- map(chem$CasRN, get_cids_from_cas, .progress = TRUE)
+saveRDS(cids, "cids.rds")
 
 # chem-gene-ixn
 cgi <- ctd$CTD_chem_gene_ixns
