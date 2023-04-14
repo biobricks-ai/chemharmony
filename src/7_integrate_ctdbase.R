@@ -8,14 +8,15 @@ chem <- chem |> filter(!is.na(CasRN)) |> collect()
 nrow(chem)
 
 # look up chemicals by their mesh id on pubchem
+httr::set_config(httr::config(http_version = 0))
 get_cids_from_cas <- function(cas_number) {
+  
   base_url <- "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/"
   url <- paste0(base_url, cas_number, "/cids/json")
   response <- GET(url)
-  httr::set_config(httr::config(http_version = 0))
   
   if (http_status(response)$category != "Success") {
-    return(NA)
+    return(list())
   }
   
   content <- content(response, as = "text", encoding = "UTF-8")
@@ -25,9 +26,9 @@ get_cids_from_cas <- function(cas_number) {
   Sys.sleep(0.3)
   return(json_data$IdentifierList$CID)
 }
-get_cids_from_cas <- purrr::possibly(get_cids_from_cas, otherwise = NA_integer_)
+get_cids_from_cas <- purrr::possibly(get_cids_from_cas, otherwise = list())
 cids <- map(chem$CasRN, get_cids_from_cas, .progress = TRUE)
-saveRDS(cids, "cids.rds")
+saveRDS(cids, "staging/cids.rds")
 
 # chem-gene-ixn
 cgi <- ctd$CTD_chem_gene_ixns
