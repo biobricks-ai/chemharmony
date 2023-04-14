@@ -35,6 +35,18 @@ stages:
       - src/6_integrate_ice.R
     outs:
       - staging/ice
+  ctdbase:
+    cmd: Rscript src/7_integrate_ctdbase.R
+    deps: 
+      - src/7_integrate_ctdbase.R
+    outs:
+      - staging/ctdbase
+  pubchem:
+    cmd: Rscript src/8_integrate_pubchem.R
+    deps: 
+      - src/8_integrate_pubchem.R
+    outs:
+      - staging/pubchem
   harmonize:
     cmd: Rscript src/7_harmonization.R
     deps: 

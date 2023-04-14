@@ -1,6 +1,7 @@
 pacman::p_load(tidyverse, biobricks, arrow)
 
 pc <- bbload("pubchem")
+stg <- fs::dir_create("staging/ctdbase")
 
 # properties and activities ==============================================
 # TODO pubchem activities may not always fit in ram
