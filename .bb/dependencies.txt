@@ -9,3 +9,4 @@ https://github.com/biobricks-ai/cpdat#121107f384a0d4a5739716e6175d947a01cdba70
 https://github.com/biobricks-ai/toxcast#c75bbd9ed5c8e9cdaf3e46df8ccc69f51b445fd2
 https://github.com/biobricks-ai/pubchem#d45fb1c7942887c800ae9781045b04f937f942e3
 https://github.com/biobricks-ai/comptox#4fe497df0c7cf7ddff736a04a238d4795daf3c99
+https://github.com/biobricks-ai/ctdbase#7ff45fac905951febda25e2ab26e014990adcc0e
