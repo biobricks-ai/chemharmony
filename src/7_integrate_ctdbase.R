@@ -26,7 +26,6 @@ get_cids_from_cas <- function(cas_number) {
 }
 get_cids_from_cas <- purrr::possibly(get_cids_from_cas, otherwise = list())
 cids <- map(chem$CasRN, get_cids_from_cas, .progress = TRUE)
-saveRDS(cids, "staging/cids.rds")
 
 pcc <- bbload("pubchem")$compound_sdf
 pcc <- pcc |> filter(property=="PUBCHEM_IUPAC_INCHI")

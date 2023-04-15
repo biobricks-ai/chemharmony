@@ -7,5 +7,5 @@ https://github.com/biobricks-ai/reach#735f2e938d4ed7d70701090ca0852954e43024ef
 https://github.com/biobricks-ai/cpcat#825fac7168f436f6b4bf61e5d663d04ac163fb25
 https://github.com/biobricks-ai/cpdat#121107f384a0d4a5739716e6175d947a01cdba70
 https://github.com/biobricks-ai/toxcast#c75bbd9ed5c8e9cdaf3e46df8ccc69f51b445fd2
-https://github.com/biobricks-ai/ctdbase#6703707d91477202eea193b9130f2854ada4cb86
 https://github.com/biobricks-ai/pubchem#d45fb1c7942887c800ae9781045b04f937f942e3
+https://github.com/biobricks-ai/comptox#4fe497df0c7cf7ddff736a04a238d4795daf3c99

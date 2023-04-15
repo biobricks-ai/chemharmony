@@ -14,7 +14,7 @@ act <- pc$bioassay_concise |>
 cid <- act$pubchem_cid |> unique()
 cmp <- pc$compound_sdf |> filter(property=="PUBCHEM_IUPAC_INCHI") |> collect() 
 cmp <- cmp |> filter(id %in% cid) |> distinct()
-cmp <- cmp |> group_by(pubchem_cid) |> summarize(sid=uuid::UUIDgenerate(),inchi=first(value)) |> ungroup()
+cmp <- cmp |> group_by(id) |> summarize(sid=uuid::UUIDgenerate(),inchi=first(value)) |> ungroup()
 cmp <- cmp |> select(sid, pubchem_cid=id, inchi)
 
 act <- act |> inner_join(cmp, by="pubchem_cid")
@@ -39,6 +39,6 @@ arrow::write_parquet(propjson, fs::path(stg,"properties.parquet"))
 # Export Activities ====================================================
 activities <- act |> select(sid,pid,inchi,value) |> distinct() |>
   mutate(aid = paste0("pubchem-", row_number())) |>
-  select(aid, sid, pid, inchi, value=Response)
+  select(aid, sid, pid, inchi, value)
 
 arrow::write_parquet(activities, fs::path(stg,"activities.parquet"))
