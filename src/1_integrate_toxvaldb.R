@@ -36,8 +36,8 @@ tval <- tval |> select(sid, dtxsid, inchi, all_of(props), value=toxval_numeric)
 tval <- tval |> group_by(!!!syms(props)) |> mutate(pid = uid()) |> ungroup()
 tval <- tval |> group_by(sid,pid) |> mutate(value=median(value)) |> ungroup() |> distinct()
 tval <- tval |> group_by(pid) |> filter(n() > 500) |> ungroup()
-tval <- tval |> group_by(pid) |> 
-  mutate(value = sprintf("quartile_%s",ntile(value,4))) |> ungroup() 
+tval <- tval |> group_by(pid) |> mutate(medvalue = median(value)) |> ungroup()
+tval <- tval |> group_by(pid) |> mutate(value = ifelse(value<medvalue,"negative","positive")) |> ungroup()
 
 # Export Chemicals ====================================================
 substances <- tval |> 

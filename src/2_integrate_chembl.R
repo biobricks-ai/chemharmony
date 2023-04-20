@@ -21,9 +21,10 @@ act <- act |> select(sid, molregno, inchi,
 props <- c("assay_id","standard_type","type","bao_endpoint","units")
 act <- act |> group_by(!!!syms(props)) |> mutate(pid = uuid()) |> ungroup()
 
-# set repeated measures to the median value and then to property quartile
+# set repeated measures to the median value and then to above or below median
 act <- act |> group_by(across(c(-value))) |> summarize(value=median(value)) |> ungroup() 
-act <- act |> group_by(pid) |> mutate(value = sprintf("quartile_%s",ntile(value,4))) |> ungroup() 
+act <- act |> group_by(pid) |> mutate(medvalue = median(value)) |> ungroup() 
+act <- act |> group_by(pid) |> mutate(value = ifelse(value<medvalue,"negative","positive")) |> ungroup() 
 
 # remove properties with less than 1000 values
 act <- act |> group_by(pid) |> filter(n()>1000) |> ungroup()

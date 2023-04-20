@@ -81,5 +81,8 @@ act <- act |> group_by(ChemicalID, pid) |> filter(n() == 1) |> ungroup()
 # join with chem to get sid
 schem <- chem |> select(sid, ChemicalID, inchi)
 act <- act |> inner_join(schem, by="ChemicalID")
-act <- act |> select(sid,pid,inchi,value)
+act <- act |> 
+  mutate(aid = paste0("ctdbase-", row_number())) |>
+  select(aid,sid,pid,inchi,value)
+
 arrow::write_parquet(act, fs::path(stg,"activities.parquet"))

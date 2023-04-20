@@ -14,31 +14,37 @@ sizes = ice |> map(~ n_distinct(.$DTXSID)) |> unlist() |> sort()
 irri <- ice$`Skin_Irritation_Skin_Irritation-Corrosion`
 irri <- irri |> select(DTXSID, Assay, Endpoint, Response, Units)
 irri <- irri |> filter(Response %in% c("C","NC","Active","Inactive","0","1","2","3"))
+irri <- irri |> mutate(Response = ifelse(Response %in% c("C","Active","1","2","3"),"positive","negative"))
 
 adme <- ice$ADME_Parameters_ADME_Parameter 
 adme <- adme |> select(DTXSID,Assay,Endpoint,Response,Units)
 adme <- adme |> mutate(Response = as.numeric(Response))
-adme <- adme |> mutate(Response = ntile(Response, 4))
-adme <- adme |> mutate(Response = sprintf("quartile_%s", Response))
+adme <- adme |> group_by(Assay,Endpoint,Units) |> 
+  mutate(medR = median(Response), Response = ifelse(Response<medR,"negative","positive")) |> 
+  ungroup()
 
 sens <- ice$Skin_Sensitization_Chemicals
 sens <- sens |> select(DTXSID, Assay, Endpoint, Response=Value, Units=Unit)
 sens <- sens |> filter(Response %in% c("Inactive","Active","Non-sensitizer","Sensitizer"))
+sens <- sens |> mutate(Response = ifelse(Response %in% c("Active","Sensitizer"),"positive","negative"))
 
 canc <- ice$Cancer_Data
 canc <- canc |> select(DTXSID, Assay, Endpoint, Response, Units)
 canc <- canc |> filter(Response %in% c("Negative","Positive"))
+canc <- canc |> mutate(Response = ifelse(Response == "Positive","positive","negative"))
 
 oral <- ice$Acute_Oral_Toxicity_Acute_Oral_Toxicity
 oral <- oral |> select(DTXSID, Assay, Endpoint, Response, Units)
 oral <- oral |> filter(Endpoint == "LD50",!is.na(Response))
 oral <- oral |> mutate(Response = as.numeric(Response))
-oral <- oral |> mutate(Response = ntile(Response, 4))
-oral <- oral |> mutate(Response = sprintf("quartile_%s", Response))
+oral <- oral |> group_by(Assay,Endpoint,Units) |> 
+  mutate(medR = median(Response), Response = ifelse(Response<medR,"negative","positive")) |> 
+  ungroup()
 
 chts <- ice$cHTS2022_invitrodb34_20220302
 chts <- chts |> select(DTXSID, Assay, Endpoint, Response, Units=ResponseUnit)
 chts <- chts |> filter(Response %in% c("Active","Inactive"))
+chts <- chts |> mutate(Response = ifelse(Response == "Active","positive","negative"))
 
 iceb <- bind_rows(irri, adme, sens, canc, oral, chts)
 

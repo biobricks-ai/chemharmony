@@ -1,4 +1,6 @@
 stages:
+  dependencies:
+    cmd: bash src/0_dependencies.sh
   toxvaldb:
     cmd: Rscript src/1_integrate_toxvaldb.R
     deps: 
@@ -48,10 +50,10 @@ stages:
     outs:
       - staging/pubchem
   harmonize:
-    cmd: Rscript src/7_harmonization.R
+    cmd: Rscript src/9_harmonization.R
     deps: 
       - staging
-      - src/7_harmonization.R
+      - src/9_harmonization.R
     outs:
       - brick/substances.parquet
       - brick/properties.parquet
