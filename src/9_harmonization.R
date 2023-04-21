@@ -18,7 +18,7 @@ process_batch <- function(batch){
   }, otherwise = NA_character_, quiet = TRUE)
 
   batch$smiles = purrr::map_chr(batch$inchi, inchi2smi) 
-  batch |> dplyr::select(source, aid, sid, pid, inchi, smiles, value)
+  batch |> dplyr::select(source, aid, sid, pid, inchi, smiles, value, binary_value)
 }
 
 
@@ -37,7 +37,11 @@ for(file in afiles){
       value == "active antagonist" ~ "negative",
       value == "increases" ~ "positive",
       value == "decreases" ~ "negative",
-      TRUE ~ value
+      value == "positive" ~ "positive",
+      value == "negative" ~ "negative"
+    )) |> mutate(binary_value = case_when(
+      value == "positive" ~ 1,
+      value == "negative" ~ 0
     ))
   
   path <- fs::dir_create(td, uuid::UUIDgenerate())
@@ -67,6 +71,14 @@ for(file in a2files){
 }
 
 activities <- arrow::open_dataset("staging/activities.parquet") 
+
+# TODO SOURCES SHOULD NOT GENERATE DUPLICATE PID INCHI PAIRS
+# remove duplicate pid/inchi pairs
+activities <- activities |> mutate(pid_inchi = paste(pid,inchi,sep="|"))
+discordant <- activities |> count(pid_inchi) |> filter(n>1) |> collect() |> pull(pid_inchi)
+activities <- activities |> filter(!(pid_inchi %in% discordant)) |> select(-pid_inchi)
+
+activities <- activities |> filter(!is.na(inchi))
 activities <- activities |> filter(!is.na(smiles))
 activities |> arrow::write_dataset("brick/activities.parquet", max_rows_per_file = 2e6)
 
@@ -102,3 +114,8 @@ properties |> arrow::write_dataset("brick/properties.parquet", max_rows_per_file
 fs::dir_delete("staging/substances.parquet")
 fs::dir_delete("staging/properties.parquet")
 fs::dir_delete("staging/activities.parquet")
+
+# LOOK FOR DUPLICAT PID INCHI AND HIGHLIGHT BAD SOURCES
+# df <- arrow::open_dataset("brick/activities.parquet") |> collect()
+# bad_examples <- df |> count(source,pid,inchi) |> filter(n>1)
+# bad_examples |> count(source) |> arrange(desc(n)) 

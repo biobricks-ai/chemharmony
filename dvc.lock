@@ -70,25 +70,25 @@ stages:
     cmd: Rscript src/9_harmonization.R
     deps:
     - path: src/9_harmonization.R
-      md5: 2b034405258258638a5c5cb71ae19d64
-      size: 4114
+      md5: a37965eb336c184c3b75eca64a3af6a0
+      size: 4935
     - path: staging
-      md5: cb4c2c114512da695ef342e7c28cf220.dir
-      size: 28708859292
-      nfiles: 25
+      md5: 3b19df6eeaf5252ad0a46489c4389f3a.dir
+      size: 287026607
+      nfiles: 22
     outs:
     - path: brick/activities.parquet
-      md5: 22cb9f2c8fbc2be7062f2a04967700e3.dir
-      size: 35495750592
-      nfiles: 125
+      md5: 05da298b67cb69df505d9c20e4d33c1a.dir
+      size: 465314983
+      nfiles: 4
     - path: brick/properties.parquet
-      md5: e88bdceb54c61ec8b30daff67066e334.dir
-      size: 48421291
+      md5: 9700f6921f37b39c03720b7f871a25ec.dir
+      size: 24243705
       nfiles: 1
     - path: brick/substances.parquet
-      md5: 5c06476a79b414e26b0e07f147b9bffa.dir
-      size: 566409820
-      nfiles: 3
+      md5: b38652fcd57883892d6899b65e36f629.dir
+      size: 86984712
+      nfiles: 1
   dependencies:
     cmd: bash src/0_dependencies.sh
   pubchem:

@@ -43,12 +43,12 @@ stages:
       - src/7_integrate_ctdbase.R
     outs:
       - staging/ctdbase
-  pubchem:
-    cmd: Rscript src/8_integrate_pubchem.R
-    deps: 
-      - src/8_integrate_pubchem.R
-    outs:
-      - staging/pubchem
+  # pubchem:
+  #   cmd: Rscript src/8_integrate_pubchem.R
+  #   deps: 
+  #     - src/8_integrate_pubchem.R
+  #   outs:
+  #     - staging/pubchem
   harmonize:
     cmd: Rscript src/9_harmonization.R
     deps: 
