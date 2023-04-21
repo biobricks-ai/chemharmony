@@ -70,17 +70,14 @@ for(file in a2files){
   i <- i + 1
 }
 
-activities <- arrow::open_dataset("staging/activities.parquet") 
+act <- arrow::open_dataset("staging/activities.parquet") 
 
-# TODO SOURCES SHOULD NOT GENERATE DUPLICATE PID INCHI PAIRS
-# remove duplicate pid/inchi pairs
-activities <- activities |> mutate(pid_inchi = paste(pid,inchi,sep="|"))
-discordant <- activities |> count(pid_inchi) |> filter(n>1) |> collect() |> pull(pid_inchi)
-activities <- activities |> filter(!(pid_inchi %in% discordant)) |> select(-pid_inchi)
-
-activities <- activities |> filter(!is.na(inchi))
-activities <- activities |> filter(!is.na(smiles))
-activities |> arrow::write_dataset("brick/activities.parquet", max_rows_per_file = 2e6)
+# TODO need to do something better here
+# set pid+inchi value to positive if it is positive in any duplicate 
+act <- act |> filter(!is.na(inchi)) |> filter(!is.na(smiles))
+act <- act |> group_by(pid,inchi) |> summarise(binvalue=max(binary_value)) |> ungroup()
+act <- act |> mutate(value = ifelse(binvalue==1,"positive","negative"))
+act |> arrow::write_dataset("brick/activities.parquet", max_rows_per_file = 1e6)
 
 # SUBSTANCES =============================================================
 sfiles <- fs::dir_ls("staging", recurse=T, glob="*.parquet", type="file")
