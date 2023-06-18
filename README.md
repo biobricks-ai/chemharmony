@@ -1,4 +1,4 @@
-# chemharmony - aggregating a large scale chemical activity store
+# chemharmony - a large scale chemical activity store
 Chemharmony harmonizes some simple chemical properties.
 
 It reduces databases into three tables:
