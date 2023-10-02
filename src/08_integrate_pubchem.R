@@ -1,8 +1,8 @@
 # TODO this code is generating duplicate pid+inchi values and must be redone
-# pacman::p_load(tidyverse, biobricks, arrow)
+pacman::p_load(tidyverse, biobricks, arrow)
 
-# pc <- bbload("pubchem")
-# stg <- fs::dir_create("staging/pubchem")
+pc <- bbload("pubchem")
+stg <- fs::dir_create("staging/pubchem")
 
 # # properties and activities ==============================================
 # # TODO pubchem activities may not always fit in ram

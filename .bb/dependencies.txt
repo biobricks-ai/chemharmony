@@ -3,10 +3,11 @@ https://github.com/biobricks-ai/echemportal#5625ed0d8111d22508b126bce26b3bb6be3a
 https://github.com/biobricks-ai/ice#6d2283c6c87f08fa08d8e8d4249739271227211b
 https://github.com/biobricks-ai/toxvaldb#47c7fcab3974843779ce7d34aaaf2cd17561fb90
 https://github.com/biobricks-ai/tox21#5c16c5012ef64298a947a857c190d50aabe45383
-https://github.com/biobricks-ai/reach#735f2e938d4ed7d70701090ca0852954e43024ef
 https://github.com/biobricks-ai/cpcat#825fac7168f436f6b4bf61e5d663d04ac163fb25
 https://github.com/biobricks-ai/cpdat#121107f384a0d4a5739716e6175d947a01cdba70
 https://github.com/biobricks-ai/toxcast#c75bbd9ed5c8e9cdaf3e46df8ccc69f51b445fd2
-https://github.com/biobricks-ai/pubchem#d45fb1c7942887c800ae9781045b04f937f942e3
 https://github.com/biobricks-ai/comptox#4fe497df0c7cf7ddff736a04a238d4795daf3c99
 https://github.com/biobricks-ai/ctdbase#7ff45fac905951febda25e2ab26e014990adcc0e
+https://github.com/biobricks-ai/pubchem#bd846f1b77e8bdcbb66d38472b3eabb1be5dc3c8
+https://github.com/biobricks-ai/reach#0aed99891af1969b626a577f1538f9ac193c5bed
+https://github.com/biobricks-ai/bindingdb#fb466f56e06aff28e840983fab1a896624f48e66
