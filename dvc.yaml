@@ -2,58 +2,70 @@ stages:
   dependencies:
     cmd: bash src/0_dependencies.sh
   toxvaldb:
-    cmd: Rscript src/1_integrate_toxvaldb.R
+    cmd: Rscript src/01_integrate_toxvaldb.R
     deps: 
-      - src/1_integrate_toxvaldb.R
+      - src/01_integrate_toxvaldb.R
     outs:
       - staging/toxvaldb
   chembl:
-    cmd: Rscript src/2_integrate_chembl.R
+    cmd: Rscript src/02_integrate_chembl.R
     deps: 
-      - src/2_integrate_chembl.R
+      - src/02_integrate_chembl.R
     outs:
       - staging/chembl
   tox21:
-    cmd: Rscript src/3_integrate_tox21.R
+    cmd: Rscript src/03_integrate_tox21.R
     deps: 
-      - src/3_integrate_tox21.R
+      - src/03_integrate_tox21.R
     outs:
       - staging/tox21
   toxcast:
-    cmd: Rscript src/4_integrate_toxcast.R
+    cmd: Rscript src/04_integrate_toxcast.R
     deps: 
-      - src/4_integrate_toxcast.R
+      - src/04_integrate_toxcast.R
     outs:
       - staging/toxcast
   reach:
-    cmd: Rscript src/5_integrate_reach.R
+    cmd: Rscript src/05_integrate_reach.R
     deps: 
-      - src/5_integrate_reach.R
+      - src/05_integrate_reach.R
     outs:
       - staging/reach
   ice:
-    cmd: Rscript src/6_integrate_ice.R
+    cmd: Rscript src/06_integrate_ice.R
     deps: 
-      - src/6_integrate_ice.R
+      - src/06_integrate_ice.R
     outs:
       - staging/ice
   ctdbase:
-    cmd: Rscript src/7_integrate_ctdbase.R
+    cmd: Rscript src/07_integrate_ctdbase.R
     deps: 
-      - src/7_integrate_ctdbase.R
+      - src/07_integrate_ctdbase.R
     outs:
       - staging/ctdbase
-  # pubchem:
-  #   cmd: Rscript src/8_integrate_pubchem.R
-  #   deps: 
-  #     - src/8_integrate_pubchem.R
-  #   outs:
-  #     - staging/pubchem
+  pubchem:
+    cmd: Rscript src/08_integrate_pubchem.R
+    deps: 
+      - src/08_integrate_pubchem.R
+    outs:
+      - staging/pubchem
+  qsartoolbox:
+    cmd: Rscript src/09_integrate_qsartoolbox.R
+    deps: 
+      - src/09_integrate_qsartoolbox.R
+    outs:
+      - staging/qsartoolbox
+  bindingdb:
+    cmd: Rscript src/10_integrate_bindingdb.R
+    deps: 
+      - src/10_integrate_bindingdb.R
+    outs:
+      - staging/bindingdb
   harmonize:
-    cmd: Rscript src/9_harmonization.R
+    cmd: Rscript src/99_harmonization.R
     deps: 
       - staging
-      - src/9_harmonization.R
+      - src/99_harmonization.R
     outs:
       - brick/substances.parquet
       - brick/properties.parquet
