@@ -4,36 +4,38 @@ pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite)
 stg <- fs::dir_create("staging/ice")
 uid <- UUIDgenerate
 
-ice <- biobricks::bbload("ice") |> map( ~ collect(.))
-comptox <- biobricks::bbload("comptox")[[1]] |> collect()
+ice <- biobricks::bbassets("ice") |> map( ~ arrow::open_dataset(.) |> collect())
+comptox <- biobricks::bbassets("comptox")$dsstox_identifiers_parquet |> 
+  arrow::open_dataset() |> 
+  collect()
 
 # get size of each table
 sizes = ice |> map(~ n_distinct(.$DTXSID)) |> unlist() |> sort()
 
 # munge all tables with 1000+ distinct DTXSID
-irri <- ice$`Skin_Irritation_Skin_Irritation-Corrosion`
+irri <- ice$`Skin_Irritation_Skin_Irritation-Corrosion_parquet`
 irri <- irri |> select(DTXSID, Assay, Endpoint, Response, Units)
 irri <- irri |> filter(Response %in% c("C","NC","Active","Inactive","0","1","2","3"))
 irri <- irri |> mutate(Response = ifelse(Response %in% c("C","Active","1","2","3"),"positive","negative"))
 
-adme <- ice$ADME_Parameters_ADME_Parameter 
+adme <- ice$ADME_Parameters_ADME_Parameter_parquet
 adme <- adme |> select(DTXSID,Assay,Endpoint,Response,Units)
 adme <- adme |> mutate(Response = as.numeric(Response))
 adme <- adme |> group_by(Assay,Endpoint,Units) |> 
   mutate(medR = median(Response), Response = ifelse(Response<medR,"negative","positive")) |> 
   ungroup()
 
-sens <- ice$Skin_Sensitization_Chemicals
+sens <- ice$Skin_Sensitization_Chemicals_parquet
 sens <- sens |> select(DTXSID, Assay, Endpoint, Response=Value, Units=Unit)
 sens <- sens |> filter(Response %in% c("Inactive","Active","Non-sensitizer","Sensitizer"))
 sens <- sens |> mutate(Response = ifelse(Response %in% c("Active","Sensitizer"),"positive","negative"))
 
-canc <- ice$Cancer_Data
+canc <- ice$Cancer_Data_parquet
 canc <- canc |> select(DTXSID, Assay, Endpoint, Response, Units)
 canc <- canc |> filter(Response %in% c("Negative","Positive"))
 canc <- canc |> mutate(Response = ifelse(Response == "Positive","positive","negative"))
 
-oral <- ice$Acute_Oral_Toxicity_Acute_Oral_Toxicity
+oral <- ice$Acute_Oral_Toxicity_Acute_Oral_Toxicity_parquet
 oral <- oral |> select(DTXSID, Assay, Endpoint, Response, Units)
 oral <- oral |> filter(Endpoint == "LD50",!is.na(Response))
 oral <- oral |> mutate(Response = as.numeric(Response))
@@ -41,7 +43,7 @@ oral <- oral |> group_by(Assay,Endpoint,Units) |>
   mutate(medR = median(Response), Response = ifelse(Response<medR,"negative","positive")) |> 
   ungroup()
 
-chts <- ice$cHTS2022_invitrodb34_20220302
+chts <- ice$cHTS2022_invitrodb34_20220302_parquet
 chts <- chts |> select(DTXSID, Assay, Endpoint, Response, Units=ResponseUnit)
 chts <- chts |> filter(Response %in% c("Active","Inactive"))
 chts <- chts |> mutate(Response = ifelse(Response == "Active","positive","negative"))

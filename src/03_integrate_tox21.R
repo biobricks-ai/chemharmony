@@ -2,28 +2,39 @@ reticulate::use_virtualenv("./env", required = TRUE)
 pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite)
 
 # tox21 easily fits in memory
-tox21 <- biobricks::bbload("tox21")
-toxraw <- tox21$tox21 |> collect()
-toxlib <- tox21$tox21lib |> collect() # substance identifiers
-toxagg <- tox21$tox21_aggregated |> collect()
+tox21 <- biobricks::bbassets("tox21") |> map(arrow::open_dataset)
+toxraw <- tox21$tox21_parquet |> collect()
+toxlib <- tox21$tox21lib_parquet |> collect() # substance identifiers
+toxagg <- tox21$tox21_aggregated_parquet |> collect()
 
 # write tox21 to staging and later merge it
 stg <- fs::dir_create("staging/tox21")
 uid <- UUIDgenerate
 
 legal_outcomes <- c("active agonist", "active antagonist", "inactive")
-acts <- toxraw |> 
-  filter(CHANNEL_OUTCOME %in% legal_outcomes) |> 
-  filter(PURITY_RATING %in% c("A","AC","B","BC")) |>
-  filter(PURITY_RATING_4M %in% c("A","AC","B","BC")) |>
-  filter(REPRODUCIBILITY %in% c("active_match","inactive_match"))
+acts <- toxagg |> 
+  filter(!is.na(ASSAY_OUTCOME), !is.na(SMILES)) |>
+  filter(ASSAY_OUTCOME %in% legal_outcomes) |> 
+  filter(PURITY_RATING == "A") |>
+  filter(REPRODUCIBILITY %in% c("active_match","inactive_match")) |>
+  select(SAMPLE_ID, PROTOCOL_NAME, SAMPLE_DATA_TYPE, ASSAY_OUTCOME, PUBCHEM_CID, SAMPLE_NAME, SMILES, CAS, TOX21_ID)
 
 # make sid and pid
-acts <- acts |> group_by(PUBCHEM_CID) |> mutate(sid = UUIDgenerate()) |> ungroup()
+acts <- acts |> group_by(SMILES) |> mutate(sid = UUIDgenerate()) |> filter(n_distinct(SAMPLE_ID)==1) |> ungroup()
 acts <- acts |> group_by(PROTOCOL_NAME, SAMPLE_DATA_TYPE) |> mutate(pid = UUIDgenerate()) |> ungroup()
+acts <- acts |> mutate(PUBCHEM_CID = as.numeric(PUBCHEM_CID))
+
+# remove discordant values
+acts <- acts |> group_by(sid, pid) |> filter(n_distinct(ASSAY_OUTCOME) == 1) |> ungroup()
+
+# remove properties with less than 100 examples for one of their values
+acts <- acts |> group_by(pid, ASSAY_OUTCOME) |> filter(n() > 100) |> ungroup()
+acts <- acts |> group_by(pid) |> filter(n_distinct(ASSAY_OUTCOME) == length(legal_outcomes)) |> ungroup()
+acts |> count(pid, ASSAY_OUTCOME) |> pivot_wider(names_from = ASSAY_OUTCOME, values_from = n)
 
 # Export Chemicals ============================================================
-sub <- toxlib |> inner_join(acts |> select(sid, PUBCHEM_CID) |> distinct(), by="PUBCHEM_CID")
+sub <- toxlib |> inner_join(acts |> select(sid, CAS) |> distinct(), by="CAS")
+
 subjson <- sub |> 
   select(sid, SAMPLE_NAME, SAMPLE_ID, CAS, PUBCHEM_CID, SMILES, TOX21_ID) |>
   distinct() |> nest(data = -sid) |> 
@@ -48,24 +59,17 @@ smiles2inchi <- purrr::possibly(function(smiles){
   return(inchi)
 }, otherwise = NA_character_)
 
-sid_inchi = sub |> 
-  group_by(sid) |> slice(1) |> ungroup() |> # TODO why do some sids have multiple smiles?
-  select(sid,SMILES) |>
+sid_inchi = sub |> select(sid, SMILES) |> distinct() |>
   mutate(inchi = map_chr(SMILES, smiles2inchi)) |> 
-  select(sid, inchi) |> distinct() |>
-  filter(!is.na(inchi))
+  filter(!is.na(inchi)) |>
+  select(sid, inchi)
 
-activities <- acts |> group_by(sid, pid) |> 
-  summarize(value = names(which.max(table(CHANNEL_OUTCOME)))) |> ungroup() |>
-  distinct() |>
+activities <- acts |> 
+  mutate(value = ASSAY_OUTCOME) |>
   mutate(aid = paste0("tox21-", row_number())) |>
   inner_join(sid_inchi, by="sid") |>
   select(aid, sid, pid, inchi, value)
 
-# each pid value pair should have at least 100 examples
-activities <- activities |> group_by(pid, value) |>  filter(n() > 100) |> ungroup()
-
-# each pid should have at least 2 values
-activities <- activities |> group_by(pid) |> filter(n_distinct(value) > 1) |> ungroup()
-
+max_sid_pid_count <- activities |> count(sid, pid) |> pull(n) |> max()
+assertthat::assert_that(max_sid_pid_count == 1, msg = "each sid,pid should only have 1 entry.")
 arrow::write_parquet(activities, fs::path(stg,"activities.parquet"))

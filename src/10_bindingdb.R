@@ -1,45 +1,90 @@
 pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite, reticulate)
-bb <- reticulate::import("biobricks")
 
-bdb <- bbload("bindingdb")
+assets <- biobricks::bbassets("bindingdb")
 
-walk(seq_along(bdb), \(i){
-    df <- bdb[[i]] |> head() |> collect()
-    print(names(bdb)[[i]])
-    scan(what="character", n=1)
-    print(df)
-    scan(what="character", n=1)
-    print(names(bdb[[i]]))
-    scan(what="character", n=1)
-})
+raw_bindingdb <- arrow::open_dataset(assets$full_tsv_dump_parquet) |> collect()
 
-kidf <- bdb$ki_result |> collect() |> tibble()
+property_columns <- c("Target Name",    
+    "pH",
+    "Temp (C)",
+    "Target Source Organism According to Curator or DataSource",
+    "Number of Protein Chains in Target (>1 implies a multichain complex)",
+    "BindingDB Target Chain Sequence",
+    "PDB ID(s) of Target Chain",
+    "UniProt (SwissProt) Recommended Name of Target Chain",
+    "UniProt (SwissProt) Entry Name of Target Chain",
+    "UniProt (SwissProt) Primary ID of Target Chain",
+    "UniProt (SwissProt) Secondary ID(s) of Target Chain",
+    "UniProt (SwissProt) Alternative ID(s) of Target Chain",
+    "UniProt (TrEMBL) Submitted Name of Target Chain",
+    "UniProt (TrEMBL) Entry Name of Target Chain",
+    "UniProt (TrEMBL) Primary ID of Target Chain",
+    "UniProt (TrEMBL) Secondary ID(s) of Target Chain",
+    "UniProt (TrEMBL) Alternative ID(s) of Target Chain",
+    "Link to Target in BindingDB",
+    "PDB ID(s) for Ligand-Target Complex")
 
-raw <- kidf |> select(smiles=`Ligand SMILES`, inchi=`Ligand InChI`, 
-    target=7,
-    target_link=25,
-    Ki_nM = 9, IC50_nM=10, Kd_nM=11, EC50_nM=12)
+substance_columns <- c("BindingDB Reactant_set_id",
+    "Ligand SMILES",
+    "Ligand InChI",
+    "Ligand InChI Key",
+    "BindingDB MonomerID",
+    "BindingDB Ligand Name",
+    "Link to Ligand in BindingDB",
+    "Ligand HET ID in PDB",
+    "PubChem CID",
+    "PubChem SID",
+    "ChEBI ID of Ligand",
+    "ChEMBL ID of Ligand",
+    "DrugBank ID of Ligand",
+    "IUPHAR_GRAC ID of Ligand",
+    "KEGG ID of Ligand",
+    "ZINC ID of Ligand")
 
-raw |> filter(!is.na(Ki_nM)) |> nrow() # 192190
-raw |> filter(!is.na(Kd_nM)) |> nrow() # 101156
-raw |> filter(!is.na(EC50_nM)) |> nrow() # 38849
-raw |> filter(!is.na(IC50_nM)) |> nrow() # 179034
+measured_value_cols = c(
+    "Ki (nM)",
+    "IC50 (nM)",
+    "Kd (nM)",
+    "EC50 (nM)",
+    "kon (M-1-s-1)",
+    "koff (s-1)"
+)
 
-raw |> filter(is.na(Ki_nM), is.na(Kd_nM), is.na(EC50_nM), is.na(IC50_nM)) 
+bdb <- raw_bindingdb |> filter(!is.na(`Ligand InChI`))
+bdb <- bdb |> pivot_longer(all_of(measured_value_cols), names_to = "metric", values_to = "value", values_drop_na = TRUE)
+bdb <- bdb |> group_by(!!!syms(property_columns), metric) |> mutate(pid = uuid::UUIDgenerate()) |> ungroup()
+bdb <- bdb |> group_by(!!!syms(substance_columns)) |> mutate(sid = uuid::UUIDgenerate()) |> ungroup()
 
-a <- bdb |> filter(`Ligand SMILES` == 'CC(C)C1(CCc2ccc(O)cc2)CC(=O)C(Sc2cc(C)c(NS(=O)(=O)c3ccc(cn3)C(F)(F)F)cc2C(C)(C)C)C(=O)O1')
-a |> pivot_longer(everything()) |> filter(!is.na(value)) |> print(n=100)
+stg <- fs::dir_create("staging/bindingdb")
+toJ <- purrr::partial(jsonlite::toJSON, auto_unbox = TRUE)
 
+# Export Chemicals ====================================================
+substances <- bdb |> select(sid, all_of(substance_columns)) |> distinct()
+substances <- substances |> nest(data = -sid) |> mutate(data = map_chr(data, ~ toJ(as.list(.))))
 
-tonum <- function(x){
-    num = as.numeric(x)
-    if(is.na(num)){
-        num 
-    }
+arrow::write_parquet(substances, fs::path(stg, "substances.parquet"))
 
-}
-raw |> 
-    filter(!is.na(Ki_nM)) |>  # 192190 rows
-    mutate(Ki_nM = gsub("[<>]","",Ki_nM)) |>
-    mutate(num = as.numeric(Ki_nM)) |>
-    filter(is.na(num)) # 129,936 rows
+# Export Properties ====================================================
+properties <- bdb |> select(pid, all_of(property_columns), metric) |> distinct()
+properties <- properties |> nest(data = -pid) |> mutate(data = map_chr(data,  ~ toJ(as.list(.))))
+
+arrow::write_parquet(properties, fs::path(stg,"properties.parquet"))
+
+# Export Activities ====================================================
+activities <- bdb |> mutate(aid = paste0("bindingdb-",row_number()))
+activities <- activities |> select(aid, sid, pid, inchi=`Ligand InChI`, metric, value)
+activities <- activities |> mutate(value = as.numeric(gsub(">|<", "", value))) |> filter(!is.na(value)) 
+activities <- activities |> filter(metric %in% c('EC50 (nM)','IC50 (nM)','Kd (nM)','Ki (nM)'))
+activities <- activities |> mutate(
+    numvalue = value,
+    value = case_when(
+    metric == "EC50 (nM)" & value < 100 ~ "positive",
+    metric == "EC50 (nM)" & value >= 100 ~ "negative",
+    metric == "IC50 (nM)" & value < 100 ~ "positive",
+    metric == "IC50 (nM)" & value >= 100 ~ "negative",
+    metric == "Kd (nM)" & value < 10 ~ "positive",
+    metric == "Kd (nM)" & value >= 10 ~ "negative",
+    metric == "Ki (nM)" & value < 10 ~ "positive",
+    metric == "Ki (nM)" & value >= 10 ~ "negative"))
+
+arrow::write_parquet(activities, fs::path(stg,"activities.parquet"))

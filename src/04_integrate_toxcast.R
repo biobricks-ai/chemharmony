@@ -4,12 +4,13 @@ attach(list(uuid=uuid::UUIDgenerate, gb=group_by))
 out <- fs::dir_create("staging/toxcast", recurse = TRUE)
 writeds <- \(df, name) { arrow::write_dataset(df, fs::path(out, name)) }
 
-toxraw <- biobricks::bbload("toxcast")$invitrodb |> collect()
-tox <- toxraw |> rename(dtxsid = dsstox_substance_id)
+toxraw <- biobricks::bbassets("toxcast")$invitrodb_parquet |> arrow::open_dataset()
+tox <- toxraw |> collect() |> rename(dtxsid = dsstox_substance_id)
 tox <- tox |> gb(dtxsid) |> mutate(sid = uuid()) |> ungroup() 
 tox <- tox |> gb(aeid) |> mutate(pid = uuid()) |> ungroup()
 
-comptox <- biobricks::bbload("comptox")[[1]] |> collect()
+comptox <- biobricks::bbassets("comptox")$dsstox_identifiers_parquet 
+comptox <- arrow::open_dataset(comptox) |> collect()
 comptox <- comptox |> select(dtxsid, inchi) |> distinct()
 tox <- tox |> inner_join(comptox, by = "dtxsid")
 
@@ -41,9 +42,8 @@ activities <- activities |>
   select(aid, sid, pid, inchi, value)
 
 # there should be at least 100 examples of each property + value
-activities <- activities |> group_by(pid,value) |> filter(n() > 100) |> ungroup() 
-
 # each property should have at least two values
+activities <- activities |> group_by(pid,value) |> filter(n() > 100) |> ungroup() 
 activities <- activities |> group_by(pid) |> filter(n_distinct(value) > 1) |> ungroup()
 
 writeds(activities, "activities.parquet")

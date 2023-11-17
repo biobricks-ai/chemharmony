@@ -49,12 +49,12 @@ stages:
       - src/08_integrate_pubchem.R
     outs:
       - staging/pubchem
-  qsartoolbox:
-    cmd: Rscript src/09_integrate_qsartoolbox.R
-    deps: 
-      - src/09_integrate_qsartoolbox.R
-    outs:
-      - staging/qsartoolbox
+  # qsartoolbox:
+  #   cmd: Rscript src/09_integrate_qsartoolbox.R
+  #   deps: 
+  #     - src/09_integrate_qsartoolbox.R
+  #   outs:
+  #     - staging/qsartoolbox
   bindingdb:
     cmd: Rscript src/10_integrate_bindingdb.R
     deps: 

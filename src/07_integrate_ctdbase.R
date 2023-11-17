@@ -1,10 +1,10 @@
 pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite, kit, glue, httr)
 
-ctd <- biobricks::bbload("ctdbase")
+ctd <- biobricks::bbassets("ctdbase")
 stg <- fs::dir_create("staging/ctdbase")
 
 # Export Chemicals ============================================================
-chem <- ctd$CTD_chemicals |> collect()
+chem <- ctd$CTD_chemicals_parquet |> arrow::open_dataset() |> collect()
 chem <- chem |> filter(!is.na(CasRN)) |> collect()
 nrow(chem)
 
@@ -27,7 +27,8 @@ get_cids_from_cas <- function(cas_number) {
 get_cids_from_cas <- purrr::possibly(get_cids_from_cas, otherwise = list())
 cids <- map(chem$CasRN, get_cids_from_cas, .progress = TRUE)
 
-pcc <- bbload("pubchem")$compound_sdf
+pcc <- bbassets("pubchem")$compound_sdf_parquet |> arrow::open_dataset()
+if(interactive()){ pcc <- pcc |> head(1e7) |> collect() |> tibble()} # for testing
 pcc <- pcc |> filter(property=="PUBCHEM_IUPAC_INCHI")
 pcc <- pcc |> select(pubchem_cid=id, inchi=value) |> collect()
 
@@ -46,24 +47,20 @@ arrow::write_parquet(subjson, fs::path(stg,"substances.parquet"))
 
 # BUILD PROPERTIES ==============================================================
 # chem-gene-ixn
-rawcgi <- ctd$CTD_chem_gene_ixns |> collect()
+rawcgi <- ctd$CTD_chem_gene_ixns_parquet |> arrow::open_dataset() |> collect()
 rawcgi <- rawcgi |> 
   select(ChemicalID,GeneSymbol,GeneID,Organism,OrganismID,GeneForms,InteractionActions) |>
+  filter(InteractionActions %in% c("increases^expression","decreases^expression")) |>
   distinct()
 
 # process cgi into chemical, property, value
 # separate interactionActions by | and ^
-cgi <- rawcgi |> separate_rows(InteractionActions,sep="\\|")
-cgi <- cgi |> mutate(ia = strsplit(InteractionActions,"\\^"))
-cgi <- cgi |> mutate(value = map_chr(ia,~paste(.x[[1]])))
-cgi <- cgi |> mutate(ixn = map_chr(ia,~paste(.x[[2]])))
 
 # build pids
-cgi <- cgi |> mutate(property = paste(OrganismID,GeneSymbol,GeneForms,ixn,sep="_"))
-cgi <- cgi |> group_by(property) |> mutate(pid = uuid::UUIDgenerate()) |> ungroup()
+cgi <- rawcgi |> group_by(Organism,OrganismID,GeneSymbol,GeneForms) |> 
+  mutate(pid = uuid::UUIDgenerate()) |> ungroup()
 
-propjson <- cgi |> select(pid, OrganismID, GeneSymbol, GeneForms, ixn) |> 
-  distinct() |> 
+propjson <- cgi |> select(pid, Organism,OrganismID,GeneSymbol,GeneForms) |> distinct() |> 
   nest(data = -pid) |>
   mutate(data = map_chr(data, ~ jsonlite::toJSON(as.list(.), auto_unbox = T)))
 arrow::write_parquet(propjson, fs::path(stg,"properties.parquet"))

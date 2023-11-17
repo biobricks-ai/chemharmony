@@ -5,27 +5,12 @@ uid <- UUIDgenerate
 toJ <- purrr::partial(jsonlite::toJSON, auto_unbox = TRUE)
 
 ## pull data
-toxvaldb <- biobricks::bbload("toxvaldb")$toxvaldb |> collect()
-comptox  <- biobricks::bbload("comptox")$dsstox_identifiers |> collect()
+toxvaldb <- biobricks::bbassets("toxvaldb") 
+toxvaldb <- toxvaldb$toxvaldb_parquet |> arrow::open_dataset() |> collect()
+comptox  <- biobricks::bbassets("comptox")$dsstox_identifiers |> arrow::open_dataset() |> collect()
 
 tval <- toxvaldb |> group_by(dtxsid) |> mutate(sid = uid()) |> ungroup()
 tval <- tval |> inner_join(comptox, by = "dtxsid") |> filter(!is.na(inchi))
-
-# props <- c("toxval_type", "toxval_type_original", "toxval_subtype",
-#   "toxval_subtype_original", "toxval_type_category",
-#   "toxval_type_supercategory", "risk_assessment_class",
-#   "study_type", "study_duration_class", "study_duration_value",
-#   "species_common", "species_supercategory",
-#   "habitat", "human_eco", "strain", "sex", "generation", "lifestage",
-#   "exposure_route", "exposure_method", "exposure_form", "media",
-#   "media_original", "critical_effect", "critical_effect_original",
-#   "toxval_units")
-
-# print_table <- function(df, n = 10) {
-#   seq(1,ncol(df),10) |> walk(\(i){
-#     print(df[,i:min(ncol(df),(i+9))] |> sample_n(10), n=10)
-#   })
-# }
 
 props <- c("risk_assessment_class", "species_supercategory",
   "exposure_route", "toxval_type_category",
@@ -38,6 +23,7 @@ tval <- tval |> group_by(sid,pid) |> mutate(value=median(value)) |> ungroup() |>
 tval <- tval |> group_by(pid) |> filter(n() > 500) |> ungroup()
 tval <- tval |> group_by(pid) |> mutate(medvalue = median(value)) |> ungroup()
 tval <- tval |> group_by(pid) |> mutate(value = ifelse(value<medvalue,"negative","positive")) |> ungroup()
+tval |> group_by(pid,medvalue) |> summarize(n_pos = sum(value=="positive"), n_neg = sum(value=="negative"))
 
 # Export Chemicals ====================================================
 substances <- tval |> 
