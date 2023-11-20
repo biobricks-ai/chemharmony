@@ -42,10 +42,9 @@ This schema is focused on building QSAR models, but a more flexible graph based 
 - [x] src/06_integrate_ice.R
 - [x] src/03_integrate_tox21.R 
 - [x] src/10_bindingdb.R 
-
-- [/] src/07_integrate_ctdbase.R 
-- [/] src/08_integrate_pubchem.R
-
+- [x] src/07_integrate_ctdbase.R 
+- [x] src/08_integrate_pubchem.py
+- [x] src/11_integrate_toxrefdb.R
 
 - [ ] identify reprotox
 - [ ] identify exxon

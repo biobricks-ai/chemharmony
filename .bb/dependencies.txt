@@ -12,3 +12,4 @@ https://github.com/biobricks-ai/pubchem#bd846f1b77e8bdcbb66d38472b3eabb1be5dc3c8
 https://github.com/biobricks-ai/reach#0aed99891af1969b626a577f1538f9ac193c5bed
 https://github.com/biobricks-ai/qsartoolbox#3f4503ef45273eb727f2984bd75059cc7a384901
 https://github.com/biobricks-ai/bindingdb#6dd8acc13a1ce396decc53b4edd24d9adb02e7bb
+https://github.com/biobricks-ai/toxrefdb#8de5cd0d4a4073fbb8a23aafa3cfd151eb6e23b2

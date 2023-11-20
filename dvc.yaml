@@ -44,11 +44,17 @@ stages:
     outs:
       - staging/ctdbase
   pubchem:
-    cmd: Rscript src/08_integrate_pubchem.R
+    cmd: python3 src/09_integrate_pubchem.R
     deps: 
       - src/08_integrate_pubchem.R
     outs:
       - staging/pubchem
+  toxrefdb:
+    cmd: Rscript src/11_integrate_toxrefdb.R
+    deps: 
+      - src/11_integrate_toxrefdb.R
+    outs:
+      - staging/toxrefdb
   # qsartoolbox:
   #   cmd: Rscript src/09_integrate_qsartoolbox.R
   #   deps: 

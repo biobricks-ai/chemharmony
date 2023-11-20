@@ -1,4 +1,4 @@
-pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite, kit, glue, httr)
+pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite, kit, glue, httr, memoise)
 
 ctd <- biobricks::bbassets("ctdbase")
 stg <- fs::dir_create("staging/ctdbase")
@@ -24,7 +24,7 @@ get_cids_from_cas <- function(cas_number) {
   Sys.sleep(0.3)
   return(json_data$IdentifierList$CID)
 }
-get_cids_from_cas <- purrr::possibly(get_cids_from_cas, otherwise = list())
+get_cids_from_cas <- memoise::memoise(purrr::possibly(get_cids_from_cas, otherwise = list()), cache=cachem::cache_disk("cache/get_cids_from_cas"))
 cids <- map(chem$CasRN, get_cids_from_cas, .progress = TRUE)
 
 pcc <- bbassets("pubchem")$compound_sdf_parquet |> arrow::open_dataset()
@@ -46,38 +46,43 @@ subjson <- chem |>
 arrow::write_parquet(subjson, fs::path(stg,"substances.parquet"))
 
 # BUILD PROPERTIES ==============================================================
-# chem-gene-ixn
-rawcgi <- ctd$CTD_chem_gene_ixns_parquet |> arrow::open_dataset() |> collect()
-rawcgi <- rawcgi |> 
-  select(ChemicalID,GeneSymbol,GeneID,Organism,OrganismID,GeneForms,InteractionActions) |>
-  filter(InteractionActions %in% c("increases^expression","decreases^expression")) |>
-  distinct()
+rawcgi <- {
+  df1 <- ctd$CTD_chem_gene_ixns_parquet |> arrow::open_dataset() |> collect()
+  df2 <- df1 |> 
+    select(ChemicalID,GeneSymbol,GeneID,Organism,OrganismID,GeneForms,InteractionActions) |>
+    filter(InteractionActions %in% c("increases^expression","decreases^expression")) |>
+    distinct()
 
-# process cgi into chemical, property, value
-# separate interactionActions by | and ^
+  df3 <- df2 |> mutate(ChemicalID = paste("MESH:",ChemicalID,sep=""))
+  df4 <- df3 |> inner_join(chem, by="ChemicalID") |> collect()
+  df4
+}
 
-# build pids
-cgi <- rawcgi |> group_by(Organism,OrganismID,GeneSymbol,GeneForms) |> 
-  mutate(pid = uuid::UUIDgenerate()) |> ungroup()
+# build pids and values
+cgi <- {
 
-propjson <- cgi |> select(pid, Organism,OrganismID,GeneSymbol,GeneForms) |> distinct() |> 
+  # build pids
+  df1 <- rawcgi |> 
+    mutate(action = "modifies expression in the x direction") |>
+    group_by(Organism,OrganismID,GeneSymbol,GeneForms, action) |> 
+    mutate(pid = uuid::UUIDgenerate()) |> ungroup()
+  
+  # build values with positive = increases^expression and negative = decreases^expression
+  df2 <- df1 |> mutate(value = ifelse(InteractionActions == "increases^expression", "positive", "negative")) 
+  df2
+}
+
+# filter out properties with a 
+propjson <- cgi |> select(pid, Organism, OrganismID, GeneSymbol, GeneForms, action) |> distinct() |> 
   nest(data = -pid) |>
   mutate(data = map_chr(data, ~ jsonlite::toJSON(as.list(.), auto_unbox = T)))
+
 arrow::write_parquet(propjson, fs::path(stg,"properties.parquet"))
 
 # BUILD ACTIVITIES ==============================================================
 
 # create activities
-act <- cgi |> select(ChemicalID, pid, value) |> distinct()
-act <- act |> filter(value %in% c("decreases","increases"))
-act <- act |> mutate(ChemicalID = paste("MESH:",ChemicalID,sep=""))
-
-# remove discordant chemical properties
-act <- act |> group_by(ChemicalID, pid) |> filter(n() == 1) |> ungroup()
-
-# join with chem to get sid
-schem <- chem |> select(sid, ChemicalID, inchi)
-act <- act |> inner_join(schem, by="ChemicalID")
+act <- cgi |> select(sid, pid, inchi, value) |> filter(!is.na(inchi)) |> distinct() 
 act <- act |> 
   mutate(aid = paste0("ctdbase-", row_number())) |>
   select(aid,sid,pid,inchi,value)
