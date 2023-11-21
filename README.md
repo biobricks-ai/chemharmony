@@ -36,15 +36,15 @@ This schema is focused on building QSAR models, but a more flexible graph based 
 
 # TODO
 - [x] src/01_integrate_toxvaldb.R
-- [x] src/02_integrate_chembl.R
 - [x] src/04_integrate_toxcast.R
 - [x] src/05_integrate_reach.R
-- [x] src/06_integrate_ice.R
 - [x] src/03_integrate_tox21.R 
 - [x] src/10_bindingdb.R 
-- [x] src/07_integrate_ctdbase.R 
-- [x] src/08_integrate_pubchem.py
 - [x] src/11_integrate_toxrefdb.R
+- [x] src/08_integrate_pubchem.py
+- [x] src/07_integrate_ctdbase.R 
+- [x] src/02_integrate_chembl.R
+- [x] src/06_integrate_ice.R
 
 - [ ] identify reprotox
 - [ ] identify exxon

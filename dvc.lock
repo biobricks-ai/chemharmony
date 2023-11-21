@@ -1,70 +1,82 @@
 schema: '2.0'
 stages:
   reach:
-    cmd: Rscript src/5_integrate_reach.R
+    cmd: Rscript src/05_integrate_reach.R
     deps:
-    - path: src/5_integrate_reach.R
-      md5: 2dc59fabfc4d79526875ba2cc1d1fa35
-      size: 1953
+    - path: src/05_integrate_reach.R
+      hash: md5
+      md5: f02b60446c6f643dce7ea2e5b92ee444
+      size: 2381
     outs:
     - path: staging/reach
-      md5: a88aef39c769c1cf60d0e56c68bc3220.dir
-      size: 1452550
+      hash: md5
+      md5: 8e535a847b04278eecd9ca88a129cd21.dir
+      size: 870584
       nfiles: 3
   toxcast:
-    cmd: Rscript src/4_integrate_toxcast.R
+    cmd: Rscript src/04_integrate_toxcast.R
     deps:
-    - path: src/4_integrate_toxcast.R
-      md5: c0be8261798d09bb7b71c8dbfe7d92b0
-      size: 1944
+    - path: src/04_integrate_toxcast.R
+      hash: md5
+      md5: 0c489c9ed17f654fe48c220c4d526e8b
+      size: 2043
     outs:
     - path: staging/toxcast
-      md5: 33a6afa4585a27964c258f71b17e9334.dir
-      size: 20391225
+      hash: md5
+      md5: 34595e8e99fc1ceec75c09b901bcb3c7.dir
+      size: 20387566
       nfiles: 3
   chembl:
-    cmd: Rscript src/2_integrate_chembl.R
+    cmd: Rscript src/02_integrate_chembl.R
     deps:
-    - path: src/2_integrate_chembl.R
-      md5: ccafd836cdf2fa7bc9e632518d8d4c08
-      size: 2200
+    - path: src/02_integrate_chembl.R
+      hash: md5
+      md5: a031392566f47a281d75b297281e8f16
+      size: 3813
     outs:
     - path: staging/chembl
-      md5: 4eaacae6e0ba3d39894bc5bf37d271b3.dir
-      size: 160724773
+      hash: md5
+      md5: 56999c4a8188281056e031ef6b41a3c2.dir
+      size: 351398862
       nfiles: 3
   toxvaldb:
-    cmd: Rscript src/1_integrate_toxvaldb.R
+    cmd: Rscript src/01_integrate_toxvaldb.R
     deps:
-    - path: src/1_integrate_toxvaldb.R
-      md5: 03e369ffb535f67183b66e84854d3b53
-      size: 2670
+    - path: src/01_integrate_toxvaldb.R
+      hash: md5
+      md5: ff20ddd1f0f1f6932be0163d2f14c0a8
+      size: 2186
     outs:
     - path: staging/toxvaldb
-      md5: 9ea221a91127d8d72cd5d0a1de4ecae7.dir
-      size: 4410989
+      hash: md5
+      md5: b283cd7ad14a4b58016ef977d08dda96.dir
+      size: 4412143
       nfiles: 3
   ice:
-    cmd: Rscript src/6_integrate_ice.R
+    cmd: Rscript src/06_integrate_ice.R
     deps:
-    - path: src/6_integrate_ice.R
-      md5: 11098cc1f95c57498528c9c118cba157
-      size: 3802
+    - path: src/06_integrate_ice.R
+      hash: md5
+      md5: 8f01330fb4f5d3acab564ba05199e2c5
+      size: 8760
     outs:
     - path: staging/ice
-      md5: 8c21e17621738fe2eb6617b5cba0afac.dir
-      size: 12381960
+      hash: md5
+      md5: 76c987c3853ea7f9eb6f07f8be6a17f6.dir
+      size: 17616699
       nfiles: 3
   tox21:
-    cmd: Rscript src/3_integrate_tox21.R
+    cmd: Rscript src/03_integrate_tox21.R
     deps:
-    - path: src/3_integrate_tox21.R
-      md5: b146ca6850ff29a91d12d7ad9d9bd3dc
-      size: 2978
+    - path: src/03_integrate_tox21.R
+      hash: md5
+      md5: 1256ae5bc260447d2942477849fb6f57
+      size: 3397
     outs:
     - path: staging/tox21
-      md5: d4e70087824b7cdf242c22abb421ba98.dir
-      size: 4068983
+      hash: md5
+      md5: 912a68d8ce133b190132ec51e7182bed.dir
+      size: 1377317
       nfiles: 3
   harmonize:
     cmd: Rscript src/9_harmonization.R
@@ -92,24 +104,54 @@ stages:
   dependencies:
     cmd: bash src/0_dependencies.sh
   pubchem:
-    cmd: Rscript src/8_integrate_pubchem.R
+    cmd: python3 src/09_integrate_pubchem.py
     deps:
-    - path: src/8_integrate_pubchem.R
-      md5: 7d2692194914968696f50284b1299f51
-      size: 1840
+    - path: src/09_integrate_pubchem.py
+      hash: md5
+      md5: e6e11b355a343494c8f14dcdddd75685
+      size: 4084
     outs:
     - path: staging/pubchem
-      md5: 1bf9fe0fe2d9d75968ccbead515ea8f8.dir
-      size: 28421832685
-      nfiles: 3
+      hash: md5
+      md5: d8eec946c9cded6797f22fe502ff3e22.dir
+      size: 61206355762
+      nfiles: 1008
   ctdbase:
-    cmd: Rscript src/7_integrate_ctdbase.R
+    cmd: Rscript src/07_integrate_ctdbase.R
     deps:
-    - path: src/7_integrate_ctdbase.R
-      md5: a43a0ce59441c34da997419e357cb4a2
-      size: 3564
+    - path: src/07_integrate_ctdbase.R
+      hash: md5
+      md5: e8312b8bc134e8669efd76aca34a6aef
+      size: 3715
     outs:
     - path: staging/ctdbase
-      md5: 8fef4c66af57f19f44961faa050d8009.dir
-      size: 83596063
+      hash: md5
+      md5: 28e680bea99a9e86f3c02ccdbadb050b.dir
+      size: 49305351
+      nfiles: 3
+  toxrefdb:
+    cmd: Rscript src/11_integrate_toxrefdb.R
+    deps:
+    - path: src/11_integrate_toxrefdb.R
+      hash: md5
+      md5: b82f83b06dd76a42691799e17c2eca14
+      size: 2457
+    outs:
+    - path: staging/toxrefdb
+      hash: md5
+      md5: ac12c6846193e91b8fcd72f53c756abd.dir
+      size: 155028
+      nfiles: 3
+  bindingdb:
+    cmd: Rscript src/10_integrate_bindingdb.R
+    deps:
+    - path: src/10_integrate_bindingdb.R
+      hash: md5
+      md5: abbc3b89b62145e9d7d3fcafdaeb6dbd
+      size: 3818
+    outs:
+    - path: staging/bindingdb
+      hash: md5
+      md5: e80554bc75fe646d21ecd7c53a9c74b5.dir
+      size: 916320578
       nfiles: 3

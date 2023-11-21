@@ -44,9 +44,9 @@ stages:
     outs:
       - staging/ctdbase
   pubchem:
-    cmd: python3 src/09_integrate_pubchem.R
+    cmd: python3 src/09_integrate_pubchem.py
     deps: 
-      - src/08_integrate_pubchem.R
+      - src/09_integrate_pubchem.py
     outs:
       - staging/pubchem
   toxrefdb:

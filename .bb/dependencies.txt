@@ -1,6 +1,5 @@
 https://github.com/biobricks-ai/chembl#aca66df234c5721f6d777a33950a55d67ed6c5c9
 https://github.com/biobricks-ai/echemportal#5625ed0d8111d22508b126bce26b3bb6be3adc63
-https://github.com/biobricks-ai/ice#6d2283c6c87f08fa08d8e8d4249739271227211b
 https://github.com/biobricks-ai/toxvaldb#47c7fcab3974843779ce7d34aaaf2cd17561fb90
 https://github.com/biobricks-ai/tox21#4f060e70d6882029b08a7aed64042aac2c6cf651
 https://github.com/biobricks-ai/cpcat#825fac7168f436f6b4bf61e5d663d04ac163fb25
@@ -13,3 +12,4 @@ https://github.com/biobricks-ai/reach#0aed99891af1969b626a577f1538f9ac193c5bed
 https://github.com/biobricks-ai/qsartoolbox#3f4503ef45273eb727f2984bd75059cc7a384901
 https://github.com/biobricks-ai/bindingdb#6dd8acc13a1ce396decc53b4edd24d9adb02e7bb
 https://github.com/biobricks-ai/toxrefdb#8de5cd0d4a4073fbb8a23aafa3cfd151eb6e23b2
+https://github.com/biobricks-ai/ice#fa1711002bf753465afce6a17d1ad27803cb4a76
