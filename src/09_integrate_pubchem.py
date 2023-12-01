@@ -26,6 +26,8 @@ spark = SparkSession.builder \
     .config("spark.default.parallelism", "200")  \
     .config("spark.executor.extraJavaOptions", "-XX:+UseG1GC")  \
     .config("spark.driver.extraJavaOptions", "-XX:+UseG1GC") \
+    .config("spark.executor.heartbeatInterval","20000ms") \
+    .config("spark.network.timeout","10000000ms") \
     .getOrCreate()
 
 def generate_uuid():
@@ -85,12 +87,22 @@ propjson = act \
     .withColumn("data", F.to_json(struct_cols)) \
     .select("pid", "data")
 
-propjson.write.mode("overwrite").parquet("staging/pubchem/properties.parquet")
+numrows = propjson.count()
+rows_per_file = 1e6
+numfiles = int(numrows // rows_per_file) + 1
+
+propjson \
+    .repartition(numfiles) \
+    .write \
+    .option("compression", "uncompressed") \
+    .mode("overwrite").parquet("staging/pubchem/properties.parquet")
 
 # WRITE COMPOUNDS =======================================================
 struct_cols = F.struct("pubchem_cid", "inchi")
 subjson = cmp.select("sid", F.to_json(struct_cols).alias("data"))
-subjson.write.mode("overwrite").parquet("staging/pubchem/substances.parquet")
+subjson.write \
+    .option("compression", "uncompressed") \
+        .mode("overwrite").parquet("staging/pubchem/substances.parquet")
 
 # WRITE ACTIVITIES =====================================================
 gen_aid = F.udf(lambda x: f"pubchem_{x}")
@@ -100,4 +112,6 @@ actout = act \
     .withColumn("aid", gen_aid(F.monotonically_increasing_id())) \
     .select("aid", "sid", "pid", "inchi", "value")
 
-actout.write.mode("overwrite").parquet("staging/pubchem/activities.parquet")
+actout.write \
+    .option("compression", "uncompressed") \
+    .mode("overwrite").parquet("staging/pubchem/activities.parquet")

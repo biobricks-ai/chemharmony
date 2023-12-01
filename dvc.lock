@@ -49,8 +49,8 @@ stages:
     outs:
     - path: staging/toxvaldb
       hash: md5
-      md5: b283cd7ad14a4b58016ef977d08dda96.dir
-      size: 4412143
+      md5: 6c73558fb4f2ab9d32a05a7ca954ceb4.dir
+      size: 4410439
       nfiles: 3
   ice:
     cmd: Rscript src/06_integrate_ice.R
@@ -79,28 +79,78 @@ stages:
       size: 1377317
       nfiles: 3
   harmonize:
-    cmd: Rscript src/9_harmonization.R
+    cmd: Rscript src/99_harmonization.R 2> log/harmonize.log
     deps:
-    - path: src/9_harmonization.R
-      md5: a37965eb336c184c3b75eca64a3af6a0
-      size: 4935
-    - path: staging
-      md5: 3b19df6eeaf5252ad0a46489c4389f3a.dir
-      size: 287026607
-      nfiles: 22
+    - path: src/99_harmonization.R
+      hash: md5
+      md5: 38072657ae1ded56621a388dfdb3f172
+      size: 4704
+    - path: staging/bindingdb
+      hash: md5
+      md5: e80554bc75fe646d21ecd7c53a9c74b5.dir
+      size: 916320578
+      nfiles: 3
+    - path: staging/chembl
+      hash: md5
+      md5: 56999c4a8188281056e031ef6b41a3c2.dir
+      size: 351398862
+      nfiles: 3
+    - path: staging/ctdbase
+      hash: md5
+      md5: 28e680bea99a9e86f3c02ccdbadb050b.dir
+      size: 49305351
+      nfiles: 3
+    - path: staging/ice
+      hash: md5
+      md5: 76c987c3853ea7f9eb6f07f8be6a17f6.dir
+      size: 17616699
+      nfiles: 3
+    - path: staging/pubchem
+      hash: md5
+      md5: 5beac82df30bb7a687033a9b40046e53.dir
+      size: 245396245193
+      nfiles: 1304
+    - path: staging/reach
+      hash: md5
+      md5: 8e535a847b04278eecd9ca88a129cd21.dir
+      size: 870584
+      nfiles: 3
+    - path: staging/tox21
+      hash: md5
+      md5: 912a68d8ce133b190132ec51e7182bed.dir
+      size: 1377317
+      nfiles: 3
+    - path: staging/toxcast
+      hash: md5
+      md5: 34595e8e99fc1ceec75c09b901bcb3c7.dir
+      size: 20387566
+      nfiles: 3
+    - path: staging/toxrefdb
+      hash: md5
+      md5: ac12c6846193e91b8fcd72f53c756abd.dir
+      size: 155028
+      nfiles: 3
+    - path: staging/toxvaldb
+      hash: md5
+      md5: 6c73558fb4f2ab9d32a05a7ca954ceb4.dir
+      size: 4410439
+      nfiles: 3
     outs:
     - path: brick/activities.parquet
-      md5: 05da298b67cb69df505d9c20e4d33c1a.dir
-      size: 465314983
-      nfiles: 4
+      hash: md5
+      md5: eba764daf096b1301b44d717482da70d.dir
+      size: 484533702
+      nfiles: 8
     - path: brick/properties.parquet
-      md5: 9700f6921f37b39c03720b7f871a25ec.dir
-      size: 24243705
+      hash: md5
+      md5: 3edf5eb3d27d8cb20a454d5536db7326.dir
+      size: 2770432
       nfiles: 1
     - path: brick/substances.parquet
-      md5: b38652fcd57883892d6899b65e36f629.dir
-      size: 86984712
-      nfiles: 1
+      hash: md5
+      md5: fc472042b38408706554304ee956d62d.dir
+      size: 16502353041
+      nfiles: 60
   dependencies:
     cmd: bash src/0_dependencies.sh
   pubchem:
@@ -108,14 +158,14 @@ stages:
     deps:
     - path: src/09_integrate_pubchem.py
       hash: md5
-      md5: e6e11b355a343494c8f14dcdddd75685
-      size: 4084
+      md5: 9ec7afbea303918fc44844676d661b7f
+      size: 4485
     outs:
     - path: staging/pubchem
       hash: md5
-      md5: d8eec946c9cded6797f22fe502ff3e22.dir
-      size: 61206355762
-      nfiles: 1008
+      md5: 5beac82df30bb7a687033a9b40046e53.dir
+      size: 245396245193
+      nfiles: 1304
   ctdbase:
     cmd: Rscript src/07_integrate_ctdbase.R
     deps:

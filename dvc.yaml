@@ -6,7 +6,7 @@ stages:
     deps: 
       - src/01_integrate_toxvaldb.R
     outs:
-      - staging/toxvaldb
+      [staging/toxvaldb: {cache: false}]
   chembl:
     cmd: Rscript src/02_integrate_chembl.R
     deps: 
@@ -48,7 +48,7 @@ stages:
     deps: 
       - src/09_integrate_pubchem.py
     outs:
-      - staging/pubchem
+      [staging/pubchem: {cache: false}]
   toxrefdb:
     cmd: Rscript src/11_integrate_toxrefdb.R
     deps: 
@@ -68,9 +68,18 @@ stages:
     outs:
       - staging/bindingdb
   harmonize:
-    cmd: Rscript src/99_harmonization.R
+    cmd: Rscript src/99_harmonization.R 2> log/harmonize.log
     deps: 
-      - staging
+      - staging/bindingdb
+      - staging/chembl
+      - staging/ctdbase
+      - staging/ice
+      - staging/pubchem
+      - staging/reach
+      - staging/tox21
+      - staging/toxcast
+      - staging/toxrefdb
+      - staging/toxvaldb
       - src/99_harmonization.R
     outs:
       - brick/substances.parquet
