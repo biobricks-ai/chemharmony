@@ -205,3 +205,21 @@ stages:
       md5: e80554bc75fe646d21ecd7c53a9c74b5.dir
       size: 916320578
       nfiles: 3
+  build_property_categories:
+    cmd: python src/91_property_categories.py 2> log/build_property_categories.log
+    deps:
+    - path: brick/properties.parquet
+      hash: md5
+      md5: 3edf5eb3d27d8cb20a454d5536db7326.dir
+      size: 2770432
+      nfiles: 1
+    - path: src/91_property_categories.py
+      hash: md5
+      md5: ae3e8a88deffbff2f7a5c02c8f08116f
+      size: 4985
+    outs:
+    - path: brick/property_categories.parquet
+      hash: md5
+      md5: 09cfd8e38fa8e0e55e5b0e68fc9c64eb.dir
+      size: 1195718
+      nfiles: 1

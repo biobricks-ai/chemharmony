@@ -85,3 +85,11 @@ stages:
       - brick/substances.parquet
       - brick/properties.parquet
       - brick/activities.parquet
+  
+  build_property_categories:
+    cmd: python src/91_property_categories.py 2> log/build_property_categories.log
+    deps: 
+      - brick/properties.parquet
+      - src/91_property_categories.py
+    outs:
+      - brick/property_categories.parquet
