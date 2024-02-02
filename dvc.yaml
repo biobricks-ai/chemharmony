@@ -93,3 +93,11 @@ stages:
       - src/91_property_categories.py
     outs:
       - brick/property_categories.parquet
+  
+  build_property_titles:
+    cmd: python src/92_llm_property_titles.py 2> log/build_property_titles.log
+    deps: 
+      - brick/properties.parquet
+      - src/92_llm_property_titles.py
+    outs:
+      - brick/property_titles.parquet

@@ -223,3 +223,21 @@ stages:
       md5: 09cfd8e38fa8e0e55e5b0e68fc9c64eb.dir
       size: 1195718
       nfiles: 1
+  build_property_titles:
+    cmd: python src/92_llm_property_titles.py 2> log/build_property_titles.log
+    deps:
+    - path: brick/properties.parquet
+      hash: md5
+      md5: 3edf5eb3d27d8cb20a454d5536db7326.dir
+      size: 2770432
+      nfiles: 1
+    - path: src/92_llm_property_titles.py
+      hash: md5
+      md5: 5e5b1bef879a9b477dfdc6e8df9a5167
+      size: 3258
+    outs:
+    - path: brick/property_titles.parquet
+      hash: md5
+      md5: d5bcbba70ea6ab8bd5e7eaf814a1e495.dir
+      size: 535891
+      nfiles: 1

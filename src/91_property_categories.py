@@ -1,29 +1,19 @@
-import os
-import pandas as pd
-import biobricks as bb
-import uuid
-import dotenv
-import json
-import re
-import tqdm
-import functools
-import pathlib
-from joblib import Memory
+import os, dotenv, json,re, tqdm, pathlib, joblib
+import pandas as pd, biobricks as bb
 
 from pyspark.sql import SparkSession
 from pyspark.sql.types import *
-from pyspark.sql import functions as F
-from pyspark.sql.functions import col, isnan
-from pyspark.sql.window import Window
 
 from openai import OpenAI
 
-
+# SET UP =====================================================
 dotenv.load_dotenv()
 openai = OpenAI(api_key= os.environ["OPENAI_API_KEY"])
 spark = SparkSession.builder.appName("pubchem").getOrCreate()
 
 properties = spark.read.parquet("brick/properties.parquet")
+
+# GENERATE PROPERTY CATEGORIES ================================
 categories = ["acute oral toxicity", "acute inhalation toxicity", "reproductive toxicity", "skin irritation", "eye irritation", 
               "skin sensitization", "mutagenicity", "carcinogenicity", "sub-chronic toxicity", "chronic toxicity", "developmental toxicity", 
               "genotoxicity", "neurotoxicity", "immunotoxicity", "endocrine disruption", "environmental toxicity", "other"]
