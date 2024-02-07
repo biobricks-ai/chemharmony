@@ -1,7 +1,7 @@
 # chemharmony - a large scale chemical activity store
 Chemharmony harmonizes some simple chemical properties.
 
-It reduces databases into four tables:
+It reduces databases into three tables:
 
 ```mermaid
 erDiagram
@@ -16,13 +16,6 @@ erDiagram
         JSON data
     }
 
-    PROPERTY_CATEGORIES {
-        UUID pid
-        String category
-        String reason
-        Double strength
-    }
-
     ACTIVITIES {
         UUID aid
         UUID sid
@@ -32,12 +25,19 @@ erDiagram
         Double numvalue
     }
 
-    SUBSTANCES ||--o{ ACTIVITIES : contains
-    PROPERTIES ||--o{ ACTIVITIES : measures
-    PROPERTIES ||--o{ PROPERTY_CATEGORIES : categorized_by
+    ACTIVITIES ||--o{ SUBSTANCES : activity_has_substance
+    ACTIVITIES ||--o{ PROPERTIES : activity_measures_property
 
 ```
-Each `activities` is a measurement of a `properties` on a `substances` resulting in a `value` or `numvalue`.
+The primary tables in this project are substances, properties and activites. 
+
+Each activity assigns a 0 or a 1 to a given substance and property:
+
+`activity` ~ `substance` + `property` 
+
+
+# Other
+There are a few other more experimental tables right now.
 
 Property_categories are the result of a GPT4 classification of the Properties `data` field, each classification assigns a property to one or more `category` with an associated `reason` and `strength`. A strength of 1 is the weakest and 10 the strongest. 
 
