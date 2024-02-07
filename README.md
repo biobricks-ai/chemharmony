@@ -1,7 +1,5 @@
 # chemharmony - a large scale chemical activity store
-Chemharmony harmonizes some simple chemical properties.
-
-It reduces databases into three tables:
+Chemharmony merges many chemical databases in a single set of a 3 tables:
 
 ```mermaid
 erDiagram
@@ -31,10 +29,11 @@ erDiagram
 ```
 The primary tables in this project are substances, properties and activites. 
 
-Each activity assigns a 0 or a 1 to a given substance and property:
+Currently, each activity assigns a 0 or a 1 to a given substance and property:
 
 `activity` ~ `substance` + `property` 
 
+The 0 or 1 is chosen to indicate whether a given chemical is 'positive' or 'negative' for a given property. The meaning of positive or negative can vary by property. In case of chemical classifications like acute oral toxicity, positive (or 1) means that the chemical is an acute oral hazard and negative (or 0) means that it is not. For numeric properties like LD50 or binding affinity we often choose for positive to mean a chemical hs a value below the median and negative to mean it is above the median. Future versions of this repository will store the raw value of the activity. 
 
 # Other
 There are a few other more experimental tables right now.
