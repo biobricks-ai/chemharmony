@@ -37,9 +37,6 @@ def process_gpt_response(text : str) -> [(str, str)]:
     
     return (True, results)
 
-cache_dir = "./cache"
-memory = Memory(cache_dir, verbose=0)
-
 def assign_categories(prop_json, inmessages = [], attempts = 0):
     
     if attempts > 3:
