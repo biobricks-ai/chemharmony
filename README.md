@@ -43,3 +43,8 @@ Property_categories are the result of a GPT4 classification of the Properties `d
 ## FAQ
 ### This schema seems limited. What about capturing metabolism data? Or dose response data? 
 This schema is focused on building QSAR models, but a more flexible graph based schema might be better. Ultimately, capturing data that relates compounds with each other or with other entities through reactions, metabolism, etc. could be captured by adding more tables. Graph schemas can be isomorphic with that approach.
+
+# TODO
+1. [ ] ctdbase
+2. [ ] pubchem
+5. [ ] update properties, activities, and substance ids to content hash

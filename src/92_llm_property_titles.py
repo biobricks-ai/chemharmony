@@ -11,9 +11,10 @@ dotenv.load_dotenv()
 openai = OpenAI(api_key= os.environ["OPENAI_API_KEY"])
 spark = SparkSession.builder.appName("pubchem").getOrCreate()
 
-properties = spark.read.parquet("brick/properties.parquet")
+propcats = spark.read.parquet("brick/property_categories.parquet")
+properties = spark.read.parquet("brick/properties.parquet").join(propcats, "pid", "inner")
 
-def process_gpt_response(text : str, titles) -> [(str, str)]:
+def process_gpt_response(text : str, titles) -> list[(str, str)]:
     
     title = re.findall(r"title=(.*)", text.lower())
     
@@ -49,13 +50,7 @@ def assign_titles(prop_json, titles, inmessages = [], attempts = 0):
     return title[1]
 
 # import random
-allprops = properties.rdd.collect()
-output_path = "brick/property_titles.parquet"
-prev_pids = []
-if os.path.exists(output_path):
-    prev_pids = spark.read.parquet(output_path).select("pid").rdd.map(lambda x: x['pid']).collect()
-props = [prop for prop in allprops if prop['pid'] not in prev_pids]
-
+props = properties.rdd.collect()
 results_df = []
 titles = []
 for prop in tqdm.tqdm(props):
@@ -73,14 +68,5 @@ for prop in tqdm.tqdm(props):
     results_df.append({"pid": prop_id, "title": title})
 
 df = pd.DataFrame(results_df)
-
-pathlib.Path(output_path).mkdir(parents=True, exist_ok=True)
-max_i = len(os.listdir(output_path))
-df_chunks = [df[i:i+int(1e6)] for i in range(0, len(df), int(1e6))]
-for i,chunk in enumerate(df_chunks):
-    path = f"{output_path}/{i + max_i}.parquet"
-    chunk.to_parquet(path)
-    
-# test that all pids are in results_df
-pids = spark.read.parquet(output_path).select("pid").rdd.map(lambda x: x['pid']).collect()
-assert(len(set(pids).difference(set([x['pid'] for x in allprops]))) == 0)
+sdf = spark.createDataFrame(df)
+sdf.write.mode("overwrite").parquet("brick/property_titles.parquet")

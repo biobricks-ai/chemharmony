@@ -8,8 +8,8 @@ https://github.com/biobricks-ai/toxcast#c75bbd9ed5c8e9cdaf3e46df8ccc69f51b445fd2
 https://github.com/biobricks-ai/comptox#4fe497df0c7cf7ddff736a04a238d4795daf3c99
 https://github.com/biobricks-ai/ctdbase#7ff45fac905951febda25e2ab26e014990adcc0e
 https://github.com/biobricks-ai/pubchem#bd846f1b77e8bdcbb66d38472b3eabb1be5dc3c8
-https://github.com/biobricks-ai/reach#0aed99891af1969b626a577f1538f9ac193c5bed
 https://github.com/biobricks-ai/qsartoolbox#3f4503ef45273eb727f2984bd75059cc7a384901
 https://github.com/biobricks-ai/bindingdb#6dd8acc13a1ce396decc53b4edd24d9adb02e7bb
 https://github.com/biobricks-ai/toxrefdb#8de5cd0d4a4073fbb8a23aafa3cfd151eb6e23b2
-https://github.com/biobricks-ai/ice#fa1711002bf753465afce6a17d1ad27803cb4a76
+https://github.com/biobricks-ai/ice#99a85700e61b689668d20128a4d27e794d679b96
+https://github.com/biobricks-ai/reach#1760b3acedb9f707795d16e96192f8d0f8247b1e

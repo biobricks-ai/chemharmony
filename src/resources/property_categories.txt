@@ -1,0 +1,31 @@
+acute oral toxicity
+acute inhalation toxicity
+reproductive toxicity
+skin irritation
+eye irritation
+skin sensitization
+mutagenicity
+carcinogenicity
+sub-chronic toxicity
+chronic toxicity
+developmental toxicity
+genotoxicity
+neurotoxicity
+immunotoxicity
+endocrine disruption
+environmental toxicity
+hepatotoxicity
+nephrotoxicity
+kinetics (pharmacokinetics, toxicokinetics, adme, cmax, auc, etc)
+chemical physical property
+ecotoxicity
+aquatic toxicity
+soil toxicity
+bioaccumulation
+explosive properties
+flammability
+oxidizing properties
+corrosivity
+chemicalstability
+dermal absorption
+other

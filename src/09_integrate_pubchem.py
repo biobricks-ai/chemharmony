@@ -115,3 +115,28 @@ actout = act \
 actout.write \
     .option("compression", "uncompressed") \
     .mode("overwrite").parquet("staging/pubchem/activities.parquet")
+    
+# TESTS =================================================================
+# How many properties have more than 100 positives and negatives?
+act = spark.read.parquet("staging/pubchem/activities.parquet")
+res = act.groupBy("pid").pivot("value").count()\
+    .filter(col("Active") > 100)\
+    .filter(col("Inactive") > 100)
+    
+valid_properties = res.count() # 2160
+assert valid_properties > 1000
+
+# Among the valid properties, how many positives and negatives?
+res2 = act.join(res, ["pid"], how='inner')\
+    .groupBy("value").count()\
+    .toPandas()
+
+assert sum(res2['count']) > 1e6
+
+# check that there are no repeats
+res3 = act.join(res, ["pid"], how='inner').distinct()\
+    .groupBy("value").count()\
+    .toPandas()
+    
+# assert res2 and res3 are the same
+assert res2.equals(res3)

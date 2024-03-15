@@ -4,9 +4,9 @@ ctd <- biobricks::bbassets("ctdbase")
 stg <- fs::dir_create("staging/ctdbase")
 
 # Export Chemicals ============================================================
-chem <- ctd$CTD_chemicals_parquet |> arrow::open_dataset() |> collect()
-chem <- chem |> filter(!is.na(CasRN)) |> collect()
-nrow(chem)
+chem1 <- ctd$CTD_chemicals_parquet |> arrow::open_dataset() |> collect()
+chem2 <- chem1 |> filter(!is.na(CasRN)) |> collect()
+nrow(chem2) # 56311
 
 # look up chemicals by their mesh id on pubchem
 httr::set_config(httr::config(http_version = 0))
@@ -25,7 +25,7 @@ get_cids_from_cas <- function(cas_number) {
   return(json_data$IdentifierList$CID)
 }
 get_cids_from_cas <- memoise::memoise(purrr::possibly(get_cids_from_cas, otherwise = list()), cache=cachem::cache_disk("cache/get_cids_from_cas"))
-cids <- map(chem$CasRN, get_cids_from_cas, .progress = TRUE)
+cids <- map(chem2$CasRN, get_cids_from_cas, .progress = TRUE)
 
 pcc <- bbassets("pubchem")$compound_sdf_parquet |> arrow::open_dataset()
 if(interactive()){ pcc <- pcc |> head(1e7) |> collect() |> tibble()} # for testing
@@ -33,12 +33,13 @@ pcc <- pcc |> filter(property=="PUBCHEM_IUPAC_INCHI")
 pcc <- pcc |> select(pubchem_cid=id, inchi=value) |> collect()
 
 # Remove chemicals with multiple pubchem cids and join with pubchem
-chem$pubchem_cid <- cids
-chem <- chem |> filter(map(pubchem_cid,length) == 1) |> mutate(pubchem_cid = unlist(pubchem_cid))
-chem <- chem |> left_join(pcc, by="pubchem_cid") |> collect()
-chem <- chem |> group_by(pubchem_cid) |> mutate(sid = uuid::UUIDgenerate()) |> ungroup()
+chem3 <- chem2 |> mutate(pubchem_cid=cids) |> filter(map(pubchem_cid, length) == 1) |> mutate(pubchem_cid = unlist(pubchem_cid))
+chem4 <- chem3 |> left_join(pcc, by="pubchem_cid") |> collect()
+chem5 <- chem4 |> filter(!is.na(inchi)) |> collect() # remove chemicals without an inchi
 
-subjson <- chem |> 
+# generate sids and substances.parquet
+chem6 <- chem5 |> group_by(inchi) |> mutate(sid = uuid::UUIDgenerate()) |> ungroup()
+subjson <- chem6 |> 
   select(sid, inchi, pubchem_cid, ChemicalName, ChemicalID, CasRN) |> distinct() |> 
   nest(data = -sid) |> 
   mutate(data = map_chr(data, ~ jsonlite::toJSON(as.list(.), auto_unbox = TRUE)))
@@ -46,34 +47,41 @@ subjson <- chem |>
 arrow::write_parquet(subjson, fs::path(stg,"substances.parquet"))
 
 # BUILD PROPERTIES ==============================================================
-rawcgi <- {
+cgi <- {
   df1 <- ctd$CTD_chem_gene_ixns_parquet |> arrow::open_dataset() |> collect()
   df2 <- df1 |> 
-    select(ChemicalID,GeneSymbol,GeneID,Organism,OrganismID,GeneForms,InteractionActions) |>
-    filter(InteractionActions %in% c("increases^expression","decreases^expression")) |>
-    distinct()
+    mutate(ChemicalID = paste("MESH:", ChemicalID, sep="")) |>
+    select(ChemicalID, GeneSymbol, GeneID, Organism, OrganismID, GeneForms, InteractionActions) |>
+    filter(InteractionActions %in% c("increases^expression", "decreases^expression",
+                                     "increases^methylation", "decreases^methylation",
+                                     "increases^activity", "decreases^activity")) |>
+    distinct() |> 
+    mutate(value = "positive")
 
-  df3 <- df2 |> mutate(ChemicalID = paste("MESH:",ChemicalID,sep=""))
-  df4 <- df3 |> inner_join(chem, by="ChemicalID") |> collect()
-  df4
-}
+  # Flip the script for the opposite interactions
+  df3_opposite <- df2 |>
+    mutate(InteractionActions = case_when(
+      InteractionActions == "increases^expression" ~ "decreases^expression",
+      InteractionActions == "decreases^expression" ~ "increases^expression",
+      InteractionActions == "increases^methylation" ~ "decreases^methylation",
+      InteractionActions == "decreases^methylation" ~ "increases^methylation",
+      InteractionActions == "increases^activity" ~ "decreases^activity",
+      InteractionActions == "decreases^activity" ~ "increases^activity"
+    ), value = "negative")
 
-# build pids and values
-cgi <- {
+  # Combine the original zest with the new twist
+  df_combined <- bind_rows(df2, df3_opposite) |> inner_join(chem6, by="ChemicalID")
 
-  # build pids
-  df1 <- rawcgi |> 
-    mutate(action = "modifies expression in the x direction") |>
-    group_by(Organism,OrganismID,GeneSymbol,GeneForms, action) |> 
+  # create pids
+  df_final <- df_combined |> 
+    group_by(Organism,OrganismID,GeneSymbol,GeneForms,InteractionActions) |> 
     mutate(pid = uuid::UUIDgenerate()) |> ungroup()
   
-  # build values with positive = increases^expression and negative = decreases^expression
-  df2 <- df1 |> mutate(value = ifelse(InteractionActions == "increases^expression", "positive", "negative")) 
-  df2
+  df_final |> distinct()
 }
 
 # filter out properties with a 
-propjson <- cgi |> select(pid, Organism, OrganismID, GeneSymbol, GeneForms, action) |> distinct() |> 
+propjson <- cgi |> select(pid, Organism, OrganismID, GeneSymbol, GeneForms, InteractionActions) |> distinct() |> 
   nest(data = -pid) |>
   mutate(data = map_chr(data, ~ jsonlite::toJSON(as.list(.), auto_unbox = T)))
 

@@ -3,7 +3,11 @@ pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite)
 # useful docs at https://chembl.gitbook.io/chembl-interface-documentation/frequently-asked-questions/chembl-data-questions#what-is-the-assay-type
 # TODO we need to update the chembl on biobricks
 chembl  <- biobricks::bbassets("chembl") |> map(arrow::open_dataset)
+
+# delete staging/chembl if it exists and then create it again.
+if(fs::dir_exists("staging/chembl")){ fs::dir_delete("staging/chembl") }
 out <- fs::dir_create("staging/chembl", recurse = TRUE)
+
 uuid <- uuid::UUIDgenerate
 toJ <- purrr::partial(jsonlite::toJSON, auto_unbox = TRUE)
 
@@ -32,28 +36,35 @@ ass <- chembl$assays |> collect() |> select(-doc_id, -src_id) |>
     assay_type == "P" ~ "Physicochemical (P) - Assays measuring physicochemical properties of the compounds in the absence of biological material e.g., chemical stability, solubility.",
     assay_type == "U" ~ "Unclassified"))
 
-act1 <- chembl$activities |> collect() |> inner_join(cmp, by="molregno") |> inner_join(ass,by="assay_id")
-act2 <- act1 |> filter(!is.na(standard_value))
+act0 <- chembl$activities |> collect()
+act1 <- act0 |> inner_join(cmp, by="molregno") |> inner_join(ass,by="assay_id")
+act2 <- act1 |> 
+  mutate(activity_comment = tolower(activity_comment)) |> 
+  mutate(value = case_when(
+    activity_comment == "inactive" ~ "negative",
+    activity_comment == "active" ~ "positive",
+    activity_comment == "not active" ~ "negative",
+    activity_comment == "non-toxic" ~ "negative",
+    activity_comment == "toxic" ~ "positive",
+    activity_comment == "antagonist" ~ "positive",
+    TRUE ~ "none"
+  )) |> 
+  filter(value != "none") 
 
 # make property id 'pid'
 propcols = c('assay_id', 'standard_type', 'bao_endpoint', 'uo_units', 'qudt_units', 'type')
 propcols <- colnames(ass) |> c(propcols) |> unique()
 act3 <- act2 |> group_by(!!!syms(propcols)) |> mutate(pid = uuid()) |> ungroup()
 
-# remove properties with less than 100 distinct substances
-act4 <- act3 |> group_by(pid) |> filter(n_distinct(sid)>100) |> ungroup()
+# remove discordants & properties w/ less than 100 distinct substances or less than 50 neg/pos
+act4 <- act3 |> group_by(pid,sid) |> filter(n_distinct(value) == 1) |> ungroup()
+act5 <- act4 |> group_by(pid) |> filter(n_distinct(sid)>100) |> ungroup()
+act6 <- act5 |> group_by(pid) |> filter(sum(value == "positive")>50, sum(value=="negative")>50) |> ungroup()
 
-# set repeated measures to the median value and then to above or below median
-act5 <- act4 |> select(sid, pid, inchi, value = standard_value)
-act6 <- act5 |> group_by(sid,pid,inchi) |> summarize(value=median(value)) |> ungroup() 
-act7 <- act6 |> group_by(pid) |> mutate(medvalue = median(value)) |> ungroup() 
-act8 <- act7 |> group_by(pid) |> mutate(value = ifelse(value<medvalue,"negative","positive")) |> ungroup() 
-
-# remove pids with less than 50 of the minority value type
-act <- act8 |> group_by(pid) |> filter(sum(value == "positive")>50, sum(value=="negative")>50) |> ungroup()
+n_distinct(act6$pid) # 561 properties
 
 # Export Chemicals =====================================================
-substances <- act4 |> select(sid, molregno, inchi) |> distinct() |> 
+substances <- act6 |> select(sid, molregno, inchi) |> distinct() |> 
   nest(data = -sid) |> mutate(data = map_chr(data, ~ toJ(as.list(.)))) |>
   select(sid, data)
 
@@ -68,7 +79,7 @@ properties <- properties |>
 arrow::write_dataset(properties, fs::path(out,"properties.parquet"))
 
 # Export Activities ============================================================
-activities <- act |>
+activities <- act6 |>
   mutate(aid = paste0("chembl-", row_number())) |>
   select(aid, sid, pid, inchi, value)
 

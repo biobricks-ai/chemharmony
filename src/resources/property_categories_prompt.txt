@@ -1,0 +1,16 @@
+You are an expert toxicologist.
+
+{prop_json}
+
+The above is a json description of an assay, or property that is measured on chemicals. 
+Assign a category for the property from the below list, it is ok and encouraged to make logical links between assays and categories, for example an ER binding assay could be categorized as a reproductive toxicity assay. Just explain your logic in the REASON:
+
+{catstring}
+
+your response should read
+
+CATEGORY=[selected category]
+REASON=[your reason for selecting this category]
+STRENGTH=[1-10 with 1 being a weak categorization and 10 being a direct and obvious relationship between the assay and the category]
+
+FOR EACH CATEGORIZATION DO NOT OUTPUT ANYTHING OTHER THAN THE ABOVE THREE LINES. You may output multiple responses separated by a newline if desired.
