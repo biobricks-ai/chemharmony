@@ -158,14 +158,14 @@ stages:
     deps:
     - path: src/09_integrate_pubchem.py
       hash: md5
-      md5: 55e26433f03babccc0699c52c19315a6
-      size: 5277
+      md5: 3f9672c02f9205d2211f3ae4cf6b11c2
+      size: 4431
     outs:
     - path: staging/pubchem
       hash: md5
-      md5: 448a05f738eec90326b9cd4456dc5ef4.dir
-      size: 254714750087
-      nfiles: 1304
+      md5: ce560f24f97fd25e84e979b4dce36145.dir
+      size: 24153612575
+      nfiles: 842
   ctdbase:
     cmd: Rscript src/07_integrate_ctdbase.R
     deps:

@@ -1,142 +1,82 @@
-import os
-import pandas as pd
-import biobricks as bb
-import uuid
-
-from pyspark.sql import SparkSession
+import os, biobricks, pyspark.sql
 from pyspark.sql import functions as F
-from pyspark.sql.functions import col, isnan
 from pyspark.sql.window import Window
 
-# Create staging directory
-stg = os.makedirs("staging/pubchem", exist_ok=True)
-
-# Load data
-pc = bb.assets("pubchem")
-
-# Spark session with optimized settings
-spark = SparkSession.builder \
+# SETUP =================================================================
+spark = pyspark.sql.SparkSession.builder \
     .appName("pubchem") \
     .config("spark.executor.memory", "50g") \
-    .config("spark.driver.memory", "50g")  \
-    .config("spark.executor.memoryOverhead", "10g")  \
-    .config("spark.driver.memoryOverhead", "10g")  \
-    .config('spark.driver.maxResultSize', '0')  \
+    .config("spark.driver.memory", "100g")  \
+    .config("spark.executor.memoryOverhead", "20g")  \
+    .config("spark.driver.memoryOverhead", "20g")  \
     .config("spark.sql.shuffle.partitions", "200")  \
-    .config("spark.default.parallelism", "200")  \
+    .config("spark.default.parallelism", "40")  \
     .config("spark.executor.extraJavaOptions", "-XX:+UseG1GC")  \
     .config("spark.driver.extraJavaOptions", "-XX:+UseG1GC") \
     .config("spark.executor.heartbeatInterval","20000ms") \
     .config("spark.network.timeout","10000000ms") \
     .getOrCreate()
 
-def generate_uuid():
-    return str(uuid.uuid4())
-
-generate_uuid_udf = F.udf(generate_uuid)
+stg = os.makedirs("staging/pubchem", exist_ok=True)
+pc = biobricks.assets("pubchem")
 
 # BUILD COMPOUNDS =========================================================
 cmpraw = spark.read.parquet(pc.compound_sdf_parquet)
-cmp1 = cmpraw \
-    .filter(col('property') == "PUBCHEM_IUPAC_INCHI") \
-    .withColumnRenamed('value', 'inchi')
+cmp1 = cmpraw.filter(F.col('property') == "PUBCHEM_IUPAC_INCHI").withColumnRenamed('value', 'inchi')
 
 ## Filter out any cids with more than one entry and generate a sid
 cmp2 = cmp1.withColumn('count', F.count('id').over(Window.partitionBy('id')))
-cmp3 = cmp2.filter(col('count') == 1).drop('count')
-cmp4 = cmp3.withColumn('sid', generate_uuid_udf())
+cmp3 = cmp2.filter(F.col('count') == 1).drop('count')
+cmp4 = cmp3.withColumn('sid', F.monotonically_increasing_id().cast('string'))
 
 # Select and rename columns
 cmp = cmp4.select("sid", F.col('id').alias('pubchem_cid'), "inchi")
-
-# BUILD ACTIVITIES ======================================================
-
-# Read and process data in Spark, avoid collecting large data to the driver
-actraw = spark.read.parquet(pc.bioassay_concise_parquet)
-act1 = actraw \
-    .filter(col('property') == "pubchem_activity_outcome") \
-    .filter(col('value').isin(["Active", "Inactive"])) \
-    .filter(~isnan(col("pubchem_cid"))) \
-    .select("pubchem_cid", "pubchem_sid", "aid", "property", "value")
-    
-# build pids
-bea = spark.read.parquet(pc.bioassay_extra_bioassay_parquet) \
-    .withColumnRenamed('AID', 'aid') \
-    .select(
-        "aid", "BioAssay Name", "Deposit Date", "Modify Date",
-        "Source Name", "Source ID", "Substance Type", "Outcome Type",
-        "Project Category", "BioAssay Group", "BioAssay Types",
-        "Protein Accessions", "UniProts IDs", "Gene IDs",
-        "Target TaxIDs", "Taxonomy IDs"
-    ).withColumn('pid', generate_uuid_udf())
-
-## join bioassay_extra_bioassay `bea` name info with activities `act`
-## and join activities with compounds
-act2 = act1.join(bea, ["aid"], how='left')
-act = act2.join(cmp, act2.pubchem_cid == cmp.pubchem_cid, how='left')
+subjson = cmp.select("sid", F.to_json(F.struct("pubchem_cid", "inchi")).alias("data"))
+subjson.write.mode("overwrite").parquet("staging/pubchem/substances.parquet")
 
 # WRITE PROPERTIES =====================================================
-# Add a JSON column for the property data
-group_cols = ["aid", "BioAssay Name", "Deposit Date", "Modify Date",
-              "Source Name", "Source ID", "Substance Type", "Outcome Type",
-              "Project Category", "BioAssay Group", "BioAssay Types",
-              "Protein Accessions", "UniProts IDs", "Gene IDs",
-              "Target TaxIDs", "Taxonomy IDs"]
-struct_cols = F.struct(*group_cols)
-propjson = act \
-    .withColumn("data", F.to_json(struct_cols)) \
-    .select("pid", "data")
+bea = spark.read.parquet(pc.bioassay_extra_bioassay_parquet) \
+    .withColumnRenamed('AID', 'aid') \
+    .select("aid", "BioAssay Name", "Deposit Date", "Modify Date","Source Name", "Source ID", "Substance Type", "Outcome Type","Project Category", "BioAssay Group", "BioAssay Types","Protein Accessions", "UniProts IDs", "Gene IDs","Target TaxIDs", "Taxonomy IDs")\
+    .withColumn('pid', F.monotonically_increasing_id().cast('string'))
 
-numrows = propjson.count()
-rows_per_file = 1e6
-numfiles = int(numrows // rows_per_file) + 1
+group_cols = ["aid", "BioAssay Name", "Deposit Date", "Modify Date","Source Name", "Source ID", "Substance Type", "Outcome Type", "Project Category", "BioAssay Group", "BioAssay Types", "Protein Accessions", "UniProts IDs", "Gene IDs", "Target TaxIDs", "Taxonomy IDs"]
+propjson = bea.withColumn("data", F.to_json(F.struct(*group_cols))).select("pid", "data")
+propjson.write.mode("overwrite").parquet("staging/pubchem/properties.parquet")
 
-propjson \
-    .repartition(numfiles) \
-    .write \
-    .option("compression", "uncompressed") \
-    .mode("overwrite").parquet("staging/pubchem/properties.parquet")
-
-# WRITE COMPOUNDS =======================================================
-struct_cols = F.struct("pubchem_cid", "inchi")
-subjson = cmp.select("sid", F.to_json(struct_cols).alias("data"))
-subjson.write \
-    .option("compression", "uncompressed") \
-        .mode("overwrite").parquet("staging/pubchem/substances.parquet")
-
-# WRITE ACTIVITIES =====================================================
-gen_aid = F.udf(lambda x: f"pubchem_{x}")
-actout = act \
-    .select("sid", "pid", "inchi", "value") \
-    .distinct() \
-    .withColumn("aid", gen_aid(F.monotonically_increasing_id())) \
+# BUILD ACTIVITIES ======================================================
+actraw = spark.read.parquet(pc.bioassay_concise_parquet)
+act1 = actraw \
+    .filter(F.col('property') == "pubchem_activity_outcome") \
+    .filter(F.col('value').isin(["Active", "Inactive"])) \
+    .withColumn('value', F.when(F.col('value') == "Active", "positive").otherwise("negative")) \
+    .filter(~F.isnan(F.col("pubchem_cid"))) \
+    .select("pubchem_cid", "pubchem_sid", "aid", "property", "value")
+    
+act2 = act1.join(bea, ["aid"], how='inner').join(cmp, ['pubchem_cid'], how='inner')
+act3 = act2.select("sid", "pid", "inchi", "value").distinct() \
+    .withColumn("aid", F.monotonically_increasing_id().cast('string')) \
     .select("aid", "sid", "pid", "inchi", "value")
 
-actout.write \
-    .option("compression", "uncompressed") \
-    .mode("overwrite").parquet("staging/pubchem/activities.parquet")
+act3.write.mode("overwrite").parquet("staging/pubchem/activities.parquet")
     
 # TESTS =================================================================
 # How many properties have more than 100 positives and negatives?
 act = spark.read.parquet("staging/pubchem/activities.parquet")
-res = act.groupBy("pid").pivot("value").count()\
-    .filter(col("Active") > 100)\
-    .filter(col("Inactive") > 100)
-    
+res = act.groupBy("pid").pivot("value").count().filter(F.col("positive") > 100).filter(F.col("negative") > 100)
 valid_properties = res.count() # 2160
 assert valid_properties > 1000
 
 # Among the valid properties, how many positives and negatives?
-res2 = act.join(res, ["pid"], how='inner')\
-    .groupBy("value").count()\
-    .toPandas()
-
+res2 = act.join(res, ["pid"], how='inner').groupBy("value").count().toPandas()
 assert sum(res2['count']) > 1e6
 
 # check that there are no repeats
-res3 = act.join(res, ["pid"], how='inner').distinct()\
-    .groupBy("value").count()\
-    .toPandas()
-    
-# assert res2 and res3 are the same
+res3 = act.join(res, ["pid"], how='inner').distinct().groupBy("value").count().toPandas()
 assert res2.equals(res3)
+
+# joining substances with activities yields some substances
+sub = spark.read.parquet("staging/pubchem/substances.parquet")
+act = spark.read.parquet("staging/pubchem/activities.parquet")
+res = sub.join(act, ["sid"], how='inner').count()
+assert res > 1e6
