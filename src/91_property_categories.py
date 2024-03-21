@@ -30,9 +30,8 @@ prev_pids = spark.createDataFrame([], StructType([StructField("pid", StringType(
 if os.path.exists("brick/property_categories.parquet"):
     prev_pids = spark.read.parquet("brick/property_categories.parquet").select("pid")
     
-properties = spark.read.parquet("brick/properties.parquet")\
-    .join(big_pids, "pid").join(prev_pids, "pid", "left_anti")
-
+properties = spark.read.parquet("brick/properties.parquet").join(big_pids, "pid")
+properties = properties.join(prev_pids, "pid", "left_anti")
 
 # GENERATE PROPERTY CATEGORIES ================================
 categories = pathlib.Path("src/resources/property_categories.txt").read_text().splitlines()

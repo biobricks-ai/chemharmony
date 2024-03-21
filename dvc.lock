@@ -83,8 +83,8 @@ stages:
     deps:
     - path: src/80_harmonize.py
       hash: md5
-      md5: 6aac0c7d58580daf1ca80ac1df746b4a
-      size: 4410
+      md5: 23e08309c28a914ae74ec81145c10eaa
+      size: 4687
     - path: staging/bindingdb
       hash: md5
       md5: 0b97392b9b6852fd8628c88f470d6d12.dir
@@ -107,9 +107,9 @@ stages:
       nfiles: 3
     - path: staging/pubchem
       hash: md5
-      md5: 448a05f738eec90326b9cd4456dc5ef4.dir
-      size: 254714750087
-      nfiles: 1304
+      md5: ce560f24f97fd25e84e979b4dce36145.dir
+      size: 24153612575
+      nfiles: 842
     - path: staging/reach
       hash: md5
       md5: 3a12b72d70720aaebee5cee8d87ac2ed.dir
@@ -138,18 +138,18 @@ stages:
     outs:
     - path: brick/activities.parquet
       hash: md5
-      md5: fbbc3d988a889a1154a922c2794c59c5.dir
-      size: 2038331107
-      nfiles: 136
+      md5: 9289448c9cafb5dcc7d0b60a7ba7aa83.dir
+      size: 42902607309
+      nfiles: 402
     - path: brick/properties.parquet
       hash: md5
-      md5: 210b47aa60bc6d246509e4647ca18125.dir
-      size: 244869042
-      nfiles: 138
+      md5: cfa700879baf5329a17947c32b97c8e5.dir
+      size: 392746547
+      nfiles: 136
     - path: brick/substances.parquet
       hash: md5
-      md5: a987566652abe5b17bd5e22b249195a6.dir
-      size: 16614719817
+      md5: 92a6aa8187e2bd18607e19d1b80e3b5a.dir
+      size: 16554685841
       nfiles: 402
   dependencies:
     cmd: bash src/0_dependencies.sh
@@ -210,39 +210,39 @@ stages:
     deps:
     - path: brick/properties.parquet
       hash: md5
-      md5: 210b47aa60bc6d246509e4647ca18125.dir
-      size: 244869042
-      nfiles: 138
+      md5: cfa700879baf5329a17947c32b97c8e5.dir
+      size: 392746547
+      nfiles: 136
     - path: src/91_property_categories.py
       hash: md5
-      md5: 4e5b1702a351dd3b83019b09467f738c
-      size: 3677
+      md5: 4c27baa568c06bc495ce3f3d310ede99
+      size: 3694
     outs:
     - path: brick/property_categories.parquet
       hash: md5
-      md5: c81cfb59b3dfa8f4dc8c8b68f1185246.dir
-      size: 856274
-      nfiles: 130
+      md5: 6fba5b60a9d5cb43afacaab25c6c7c44.dir
+      size: 2064738
+      nfiles: 258
   build_property_titles:
     cmd: python src/92_llm_property_titles.py 2> log/build_property_titles.log
     deps:
     - path: brick/properties.parquet
       hash: md5
-      md5: 210b47aa60bc6d246509e4647ca18125.dir
-      size: 244869042
-      nfiles: 138
+      md5: cfa700879baf5329a17947c32b97c8e5.dir
+      size: 392746547
+      nfiles: 136
     - path: brick/property_categories.parquet
       hash: md5
-      md5: c81cfb59b3dfa8f4dc8c8b68f1185246.dir
-      size: 856274
-      nfiles: 130
+      md5: 6fba5b60a9d5cb43afacaab25c6c7c44.dir
+      size: 2064738
+      nfiles: 258
     - path: src/92_llm_property_titles.py
       hash: md5
-      md5: 0e8a46e80405461dcb4d78a954af7b5c
-      size: 2708
+      md5: 29f636f406813b6ee83340cee711db44
+      size: 3379
     outs:
     - path: brick/property_titles.parquet
       hash: md5
-      md5: 247f4eef0d7d30962dc4c0dd86c87d42.dir
-      size: 331794
-      nfiles: 130
+      md5: ab73822e9cc02f0cd4d80cd9d462ae0d.dir
+      size: 809075
+      nfiles: 258
