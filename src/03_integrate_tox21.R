@@ -1,4 +1,3 @@
-reticulate::use_virtualenv("./env", required = TRUE)
 pacman::p_load(biobricks, tidyverse, arrow, uuid, jsonlite)
 
 # tox21 easily fits in memory
@@ -12,25 +11,44 @@ stg <- fs::dir_create("staging/tox21")
 uid <- UUIDgenerate
 
 legal_outcomes <- c("active agonist", "active antagonist", "inactive")
-acts <- toxagg |> 
+acts1 <- toxagg |> 
   filter(!is.na(ASSAY_OUTCOME), !is.na(SMILES)) |>
   filter(ASSAY_OUTCOME %in% legal_outcomes) |> 
   filter(PURITY_RATING == "A") |>
   filter(REPRODUCIBILITY %in% c("active_match","inactive_match")) |>
+  filter(SAMPLE_DATA_TYPE %in% c("activity","viability","control","signal")) |>
+  mutate(PUBCHEM_CID = as.numeric(PUBCHEM_CID)) |>
   select(SAMPLE_ID, PROTOCOL_NAME, SAMPLE_DATA_TYPE, ASSAY_OUTCOME, PUBCHEM_CID, SAMPLE_NAME, SMILES, CAS, TOX21_ID)
 
-# make sid and pid
-acts <- acts |> group_by(SMILES) |> mutate(sid = UUIDgenerate()) |> filter(n_distinct(SAMPLE_ID)==1) |> ungroup()
-acts <- acts |> group_by(PROTOCOL_NAME, SAMPLE_DATA_TYPE) |> mutate(pid = UUIDgenerate()) |> ungroup()
-acts <- acts |> mutate(PUBCHEM_CID = as.numeric(PUBCHEM_CID))
+# make sid
+acts2 <- acts1 |> group_by(SMILES) |> mutate(sid = UUIDgenerate()) |> filter(n_distinct(SAMPLE_ID)==1) |> ungroup()
 
-# remove discordant values
-acts <- acts |> group_by(sid, pid) |> filter(n_distinct(ASSAY_OUTCOME) == 1) |> ungroup()
+# split into positive and negative
+posneg <- {
+  inactivedf <- acts2 |> filter(ASSAY_OUTCOME == "inactive")
+  is_agonist <- acts2 |> filter(ASSAY_OUTCOME == "active agonist") |> mutate(value="positive")
+  antagonist <- acts2 |> filter(ASSAY_OUTCOME == "active antagonist") |> mutate(value="positive")
+
+  ago <- is_agonist |> 
+    bind_rows(inactivedf |> mutate(ASSAY_OUTCOME="active agonist", value="negative")) |> 
+    bind_rows(antagonist |> mutate(ASSAY_OUTCOME="active agonist", value="negative")) 
+  
+  ant <- antagonist |> 
+    bind_rows(inactivedf |> mutate(ASSAY_OUTCOME="active antagonist", value="negative")) |> 
+    bind_rows(is_agonist |> mutate(ASSAY_OUTCOME="active antagonist", value="negative"))
+
+  bind_rows(ago, ant)
+}
+
+# make pid
+acts3 <- posneg |> group_by(PROTOCOL_NAME, SAMPLE_DATA_TYPE, ASSAY_OUTCOME) |> mutate(pid = UUIDgenerate()) |> ungroup()
+
+# remove examples with multiple values
+acts4 <- acts3 |> group_by(sid, pid) |> filter(n_distinct(value) == 1) |> ungroup()
 
 # remove properties with less than 100 examples for one of their values
-acts <- acts |> group_by(pid, ASSAY_OUTCOME) |> filter(n() > 100) |> ungroup()
-acts <- acts |> group_by(pid) |> filter(n_distinct(ASSAY_OUTCOME) == length(legal_outcomes)) |> ungroup()
-acts |> count(pid, ASSAY_OUTCOME) |> pivot_wider(names_from = ASSAY_OUTCOME, values_from = n)
+acts5 <- acts4 |> group_by(pid, value) |> filter(n() > 100) |> ungroup()
+acts <- acts5 |> group_by(pid) |> filter(n_distinct(value) == 2) |> ungroup()
 
 # Export Chemicals ============================================================
 sub <- toxlib |> inner_join(acts |> select(sid, CAS) |> distinct(), by="CAS")
@@ -43,7 +61,7 @@ subjson <- sub |>
 arrow::write_parquet(subjson, fs::path(stg,"substances.parquet"))
 
 # Export Properties ====================================================
-pcols <- c("PROTOCOL_NAME", "SAMPLE_DATA_TYPE")
+pcols <- c("PROTOCOL_NAME", "SAMPLE_DATA_TYPE", "ASSAY_OUTCOME")
 propjson <- acts |> select(pid, !!!syms(pcols)) |> distinct() |> nest(data = -pid) 
 propjson$data <- map_chr(propjson$data, ~ jsonlite::toJSON(as.list(.), auto_unbox = T))
 
@@ -65,7 +83,6 @@ sid_inchi = sub |> select(sid, SMILES) |> distinct() |>
   select(sid, inchi)
 
 activities <- acts |> 
-  mutate(value = ASSAY_OUTCOME) |>
   mutate(aid = paste0("tox21-", row_number())) |>
   inner_join(sid_inchi, by="sid") |>
   select(aid, sid, pid, inchi, value)
