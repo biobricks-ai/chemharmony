@@ -97,5 +97,6 @@ assert spark.read.parquet("brick/activities.parquet").count() > 1e7
 assert spark.read.parquet("brick/activities.parquet").filter(F.col("source") == "pubchem").count() > 1e6
 df = spark.read.parquet("brick/activities.parquet").select('source').distinct().toPandas()
 assert all([s in source for s in df['source']])
+
 # CLEAN UP ==========================================================================
 shutil.rmtree(stgdir.as_posix())

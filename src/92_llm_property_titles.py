@@ -1,25 +1,15 @@
-import os, dotenv, json,re, tqdm, pathlib, joblib
-import pandas as pd, biobricks as bb
+import os, json, tqdm, pandas as pd
 
-from pyspark.sql import SparkSession
-from pyspark.sql.types import *
-
-from openai import OpenAI
-
-# ADD CACHE =====================================================
-cachedir = pathlib.Path("./joblib_cache")
-cachedir.mkdir(exist_ok=True)
-memory = joblib.Memory(cachedir, verbose=0)
+from pyspark.sql import SparkSession, types as T
+from src.helper.cache_helper_titles import assign_titles
 
 # SET UP ========================================================
-dotenv.load_dotenv()
-openai = OpenAI(api_key= os.environ["OPENAI_API_KEY"])
 spark = SparkSession.builder.appName("llm_property_titles")\
     .config("spark.driver.memory", "64g")\
     .getOrCreate()
 
 propcats = spark.read.parquet("brick/property_categories.parquet")
-prev_pids = spark.createDataFrame([], StructType([StructField("pid", StringType())]))
+prev_pids = spark.createDataFrame([], T.StructType([T.StructField("pid", T.StringType())]))
 if os.path.exists("brick/property_titles.parquet"):
     prev_pids = spark.read.parquet("brick/property_titles.parquet").select("pid")
 
@@ -27,42 +17,9 @@ properties = spark.read.parquet("brick/properties.parquet").join(propcats, "pid"
 properties = properties.join(prev_pids, "pid", "left_anti")
 
 # GENERATE PROPERTY TITLES =========================================
-def process_gpt_response(text : str, titles) -> list[(str, str)]:
-    title = re.findall(r"title=(.*)", text.lower())
-    if len(title) == 0: 
-        return (False, "I could not parse any title, try again.")
-    if title in titles:
-        return (False, "This title has already been used. choose a more unique and perhaps descriptive title.")
-    return (True, title[0])
 
-@memory.cache
-def assign_titles(prop_json, titles, inmessages = [], attempts = 0, model="gpt-3.5-turbo"):
-    
-    if attempts > 3:
-        return [("unknown", "too many attempts")]
-    
-    prompt = f"you are an expert toxicologist.\n\n{prop_json}\n\nthe above is a json description of an assay that measures chemicals."
-    prompt += f"Create a title for this json, make sure it is distinct from the existing titles. It should be a title a toxicologist would understand."
-    prompt += "your response should read\n\nTITLE=[a short descriptive title]\n\n"
-    prompt += "DO NOT OUTPUT ANYTHING OTHER THAN THE TITLE LINE." 
-    
-    messages = inmessages + [{"role": "user", "content": prompt,}]
-    response = openai.chat.completions.create(messages=messages, model=model)
-    response_text = response.choices[0].message.content
-    
-    title = process_gpt_response(response_text, titles)
-    
-    if not title[0]:
-        print('title failure: ', title[1])
-        messages = messages + [{"role": "user", "content": title[1]}]
-        return assign_titles(prop_data, titles, messages, attempts + 1, model)
-    
-    return title[1]
-
-# import random
 props = properties.rdd.collect()
-results_df = []
-titles = []
+results_df, titles = [], []
 for prop in tqdm.tqdm(props):
     prop_data = prop["data"]
     prop_json_data = json.loads(prop_data)
@@ -77,6 +34,7 @@ for prop in tqdm.tqdm(props):
     print(title)
     results_df.append({"pid": prop_id, "title": title})
 
-df = pd.DataFrame(results_df)
-sdf = spark.createDataFrame(df)
-sdf.write.mode("append").parquet("brick/property_titles.parquet")
+if len(results_df) > 0:
+    df = pd.DataFrame(results_df)
+    sdf = spark.createDataFrame(df)
+    sdf.write.mode("append").parquet("brick/property_titles.parquet")

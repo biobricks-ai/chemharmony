@@ -7,3 +7,4 @@ scratch.md
 log
 .venv
 joblib_cache
+*pyc

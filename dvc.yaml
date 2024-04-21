@@ -88,19 +88,24 @@ stages:
       - brick/activities.parquet
   
   build_property_categories:
-    cmd: python src/91_property_categories.py 2> log/build_property_categories.log
+    cmd: python src/91_property_categories.py
     deps: 
       - brick/properties.parquet
       - src/91_property_categories.py
     outs:
+      - joblib_cache/assign_categories:
+          persist: true
       - brick/property_categories.parquet:
           persist: true
   
   build_property_titles:
-    cmd: python src/92_llm_property_titles.py 2> log/build_property_titles.log
+    cmd: python src/92_llm_property_titles.py
     deps: 
       - brick/properties.parquet
       - brick/property_categories.parquet
       - src/92_llm_property_titles.py
     outs:
-      - brick/property_titles.parquet
+      - joblib_cache/assign_titles:
+          persist: true
+      - brick/property_titles.parquet:
+          persist: true
