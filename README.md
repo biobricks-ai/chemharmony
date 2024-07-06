@@ -18,6 +18,7 @@ erDiagram
         UUID aid
         UUID sid
         UUID pid
+        String source
         String inchi
         String value
         Double numvalue
