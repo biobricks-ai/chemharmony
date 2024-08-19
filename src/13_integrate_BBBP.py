@@ -3,6 +3,10 @@ import json
 import biobricks
 from pyspark.sql import functions as F
 from pyspark.sql import SparkSession
+from pyspark.sql.types import StringType
+from pyspark.sql.functions import udf
+from rdkit import Chem
+from rdkit.Chem import inchi
 
 # SETUP =================================================================
 spark = SparkSession.builder \
@@ -29,8 +33,18 @@ bbbp_raw = spark.read.parquet(data.BBBP_parquet)
 bbbp_filtered = bbbp_raw.filter(F.col('smiles').isNotNull())
 bbbp_with_sid = bbbp_filtered.withColumn('sid', F.monotonically_increasing_id().cast('string'))
 
+# UDF to convert SMILES to InChI
+def smiles_to_inchi(smiles):
+    mol = Chem.MolFromSmiles(smiles)
+    return inchi.MolToInchi(mol) if mol else None
+
+smiles_to_inchi_udf = udf(smiles_to_inchi, StringType())
+
+# Add InChI column to the DataFrame
+bbbp_with_inchi = bbbp_with_sid.withColumn("inchi", smiles_to_inchi_udf(F.col("smiles")))
+
 # Combine metadata into the data column
-subjson = bbbp_with_sid.select(
+subjson = bbbp_with_inchi.select(
     "sid", 
     F.to_json(
         F.struct(
@@ -62,12 +76,12 @@ properties.write.mode("overwrite").parquet("staging/BBBP/properties.parquet")
 
 # BUILD ACTIVITIES ======================================================
 # Set the source and PID for the activity table
-bbbp_with_ids = bbbp_with_sid.withColumn("aid", F.col("sid")) \
-                             .withColumn("pid", F.lit(0)) \
-                             .withColumn("source", F.lit("BBBP"))
+bbbp_with_ids = bbbp_with_inchi.withColumn("aid", F.col("sid")) \
+                               .withColumn("pid", F.lit(0)) \
+                               .withColumn("source", F.lit("BBBP"))
 
-# Final Activity Table: select required columns including smiles
-activity_table = bbbp_with_ids.select("aid", "pid", "sid", "smiles", "source", "p_np")
+# Final Activity Table: select required columns including smiles and InChI
+activity_table = bbbp_with_ids.select("aid", "pid", "sid", "smiles", "inchi", "source", "p_np")
 
 # Write the activities table to a Parquet file
 activity_table.write.mode("overwrite").parquet("staging/BBBP/activities.parquet")
