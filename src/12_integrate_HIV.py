@@ -4,10 +4,9 @@ import biobricks
 from pyspark.sql import functions as F
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StringType
-from pyspark.sql.functions import udf
-from rdkit import Chem
+from helper.udf import get_smiles_to_inchi_udf
 
-# SETUP =================================================================
+# Spark setup
 spark = SparkSession.builder \
     .appName("HIV") \
     .config("spark.executor.memory", "50g") \
@@ -22,56 +21,41 @@ spark = SparkSession.builder \
     .config("spark.network.timeout","10000000ms") \
     .getOrCreate()
 
-stg = os.makedirs("staging/HIV", exist_ok=True)
+os.makedirs("staging/HIV", exist_ok=True)
 data = biobricks.assets("MoleculeNet")
 
-# BUILD COMPOUNDS =========================================================
+# Build compounds
 cmpraw = spark.read.parquet(data.HIV_parquet)
+cmp_filtered = cmpraw.filter(F.col('smiles').isNotNull())
+cmp_with_sid = cmp_filtered.withColumn('sid', F.monotonically_increasing_id().cast('string'))
 
-# Filter out rows with null SMILES values
-cmp1 = cmpraw.filter(F.col('smiles').isNotNull())
-cmp2 = cmp1.withColumn('sid', F.monotonically_increasing_id().cast('string'))
+# Convert SMILES to InChI
+smiles_to_inchi_udf = get_smiles_to_inchi_udf()
+cmp_with_inchi = cmp_with_sid.withColumn("inchi", smiles_to_inchi_udf(F.col("smiles"))).cache()
 
-# UDF to convert SMILES to InChI
-def smiles_to_inchi(smiles):
-    mol = Chem.MolFromSmiles(smiles)
-    if mol:
-        return Chem.MolToInchi(mol)
-    else:
-        return None
-
-smiles_to_inchi_udf = udf(smiles_to_inchi, StringType())
-
-# Add InChI column
-cmp_with_inchi = cmp2.withColumn('inchi', smiles_to_inchi_udf(F.col('smiles')))
-
-# Create the substances table in JSON format
-subjson = cmp_with_inchi.select("sid", F.to_json(F.struct("smiles", "activity", "HIV_active", "inchi")).alias("data"))
+# Substances table (only structural information)
+subjson = cmp_with_inchi.select(
+    "sid", 
+    F.to_json(F.struct("smiles", "inchi")).alias("data")
+)
 subjson.write.mode("overwrite").parquet("staging/HIV/substances.parquet")
 
-# WRITE PROPERTIES =====================================================
-# Define the JSON data for properties
+# Properties table
 data_json = json.dumps({
-    'HIV_active = 1': 'positive',
-    'HIV_active = 0': 'negative'
+    'property': 'HIV_active',
+    'active_value': 1,
+    'inactive_value': 0
 })
-
-# Create the DataFrame with a single row
-properties = spark.createDataFrame([
-    (0, data_json)
-], ["pid", "data"])
-
-# Write the properties table to a Parquet file
+properties = spark.createDataFrame([("0", data_json)], ["pid", "data"])
 properties.write.mode("overwrite").parquet("staging/HIV/properties.parquet")
 
-# BUILD ACTIVITIES ======================================================
-# Set the source and PID for the activity table
+# Activities table
 cmp_with_ids = cmp_with_inchi.withColumn("aid", F.col("sid")) \
-                             .withColumn("pid", F.lit(0)) \
-                             .withColumn("source", F.lit("HIV"))
-
-# Final Activity Table: select required columns including SMILES and InChI
-activity_table = cmp_with_ids.select("aid", "pid", "sid", "smiles", "inchi", "source", "HIV_active")
-
-# Write the activities table to a Parquet file
+                             .withColumn("pid", F.lit("0")) \
+                             .withColumn("source", F.lit("HIV")) \
+                             .withColumnRenamed("HIV_active", "value")
+activity_table = cmp_with_ids.select("aid", "pid", "sid", "smiles", "inchi", "source", "value")
 activity_table.write.mode("overwrite").parquet("staging/HIV/activities.parquet")
+
+# Clean up
+cmp_with_inchi.unpersist()

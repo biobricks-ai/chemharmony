@@ -2,6 +2,7 @@ import pyspark
 import pyspark.sql.functions as F
 import json
 from rdkit import Chem, RDLogger, logging
+from pyspark.sql.types import StringType 
 
 def get_inch2smi_udf():
     def inchi2smi(inch):
@@ -35,3 +36,12 @@ def get_canonicalize_json_udf(max_str_len=400, float_precision=4):
 
     return F.udf(canonicalize_json)
 
+def get_smiles_to_inchi_udf():
+    def smiles_to_inchi(smiles):
+        try:
+            mol = Chem.MolFromSmiles(smiles)
+            return Chem.MolToInchi(mol) if mol else None
+        except:
+            return None
+
+    return F.udf(smiles_to_inchi, StringType())
