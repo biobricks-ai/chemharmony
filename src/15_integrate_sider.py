@@ -69,9 +69,8 @@ final_activity_table = activities[0]
 for activity_table in activities[1:]:
     final_activity_table = final_activity_table.union(activity_table)
 
-# Ensure unique 'aid' by assigning row numbers
-window_spec = Window.orderBy(F.monotonically_increasing_id())
-final_activity_table = final_activity_table.withColumn("aid", row_number().over(window_spec).cast("string"))
+# Add 'aid' column using monotonically_increasing_id
+final_activity_table = final_activity_table.withColumn("aid", F.monotonically_increasing_id().cast("string"))
 
 # Reorder columns to have 'aid' and 'pid' in front
 final_activity_table = final_activity_table.select("aid", "pid", "sid", "smiles", "inchi", "value")

@@ -47,19 +47,21 @@ subjson.write.mode("overwrite").parquet("staging/BACE/substances.parquet")
 # Properties table
 data_json = json.dumps({
     'property': 'Class',
+    'description': 'BACE-1 (β-secretase 1) inhibition activity',
     'active_value': 1,
-    'inactive_value': 0
+    'inactive_value': 0,
+    'active_label': 'Active (Inhibitor)',
+    'inactive_label': 'Inactive (Non-inhibitor)'
 })
 properties = spark.createDataFrame([("0", data_json)], ["pid", "data"])
 properties.write.mode("overwrite").parquet("staging/BACE/properties.parquet")
 
 # Activities table
-cmp_with_ids = cmp_with_inchi.withColumn("aid", F.col("sid")) \
+cmp_with_ids = cmp_with_inchi.withColumn("aid", F.monotonically_increasing_id().cast('string')) \
                              .withColumn("pid", F.lit("0")) \
                              .withColumn("source", F.lit("BACE")) \
                              .withColumnRenamed("Class", "value")
 activity_table = cmp_with_ids.select("aid", "pid", "sid", "smiles", "inchi", "source", "value")
 activity_table.write.mode("overwrite").parquet("staging/BACE/activities.parquet")
 
-# Clean up
-cmp_with_inchi.unpersist()
+

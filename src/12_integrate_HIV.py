@@ -50,12 +50,10 @@ properties = spark.createDataFrame([("0", data_json)], ["pid", "data"])
 properties.write.mode("overwrite").parquet("staging/HIV/properties.parquet")
 
 # Activities table
-cmp_with_ids = cmp_with_inchi.withColumn("aid", F.col("sid")) \
+cmp_with_ids = cmp_with_inchi.withColumn("aid", F.monotonically_increasing_id().cast('string')) \
                              .withColumn("pid", F.lit("0")) \
                              .withColumn("source", F.lit("HIV")) \
                              .withColumnRenamed("HIV_active", "value")
 activity_table = cmp_with_ids.select("aid", "pid", "sid", "smiles", "inchi", "source", "value")
 activity_table.write.mode("overwrite").parquet("staging/HIV/activities.parquet")
 
-# Clean up
-cmp_with_inchi.unpersist()

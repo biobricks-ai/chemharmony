@@ -50,40 +50,44 @@ properties_list = []
 # For FDA_APPROVED column
 data_json_fda = json.dumps({
     'property': 'FDA_APPROVED',
+    'description': 'FDA approval status of the compound',
     'active_value': 1,
-    'inactive_value': 0
+    'inactive_value': 0,
+    'active_label': 'Approved',
+    'inactive_label': 'Not Approved'
 })
 properties_list.append(("0", data_json_fda))  # Ensure pid is a string
 
 # For CT_TOX column
 data_json_ct_tox = json.dumps({
     'property': 'CT_TOX',
+    'description': 'Clinical trial toxicity: indicates whether the compound was found to be toxic in clinical trials',
     'active_value': 1,
-    'inactive_value': 0
+    'inactive_value': 0,
+    'active_label': 'Toxic',
+    'inactive_label': 'Non-toxic'
 })
 properties_list.append(("1", data_json_ct_tox))  # Ensure pid is a string
 
 properties_df = spark.createDataFrame(properties_list, ["pid", "data"])
 properties_df.write.mode("overwrite").parquet("staging/CLINTOX/properties.parquet")
 
-# Activities table
+# Activities table--
 activities = []
 property_columns = ["FDA_APPROVED", "CT_TOX"]
 
 for idx, col_name in enumerate(property_columns):
     activity_table = clintox_with_inchi.withColumn("pid", F.lit(str(idx))) \
                                        .withColumn("value", F.col(col_name)) \
-                                       .withColumn("aid", F.monotonically_increasing_id().cast("string")) \
                                        .withColumn("source", F.lit("CLINTOX")) \
-                                       .select("aid", "sid", "pid", "smiles", "inchi", "source", "value")
+                                       .select("sid", "pid", "smiles", "inchi", "source", "value")
     activities.append(activity_table)
 
-final_activity_table = activities[0]
-for activity_table in activities[1:]:
-    final_activity_table = final_activity_table.union(activity_table)
+final_activity_table = activities[0].unionAll(activities[1])
 
-# Ensure unique 'aid' by assigning row numbers
-window_spec = Window.orderBy(F.monotonically_increasing_id())
-final_activity_table = final_activity_table.withColumn("aid", row_number().over(window_spec).cast("string"))
+# Generate unique 'aid' for the entire table
+final_activity_table = final_activity_table.withColumn("aid", F.monotonically_increasing_id().cast("string"))
+
+final_activity_table = final_activity_table.select("aid", "sid", "pid", "smiles", "inchi", "source", "value")
 
 final_activity_table.write.mode("overwrite").parquet("staging/CLINTOX/activities.parquet")

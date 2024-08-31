@@ -43,19 +43,20 @@ subjson.write.mode("overwrite").parquet("staging/BBBP/substances.parquet")
 # Properties table
 data_json = json.dumps({
     'property': 'p_np',
+    'description': 'Blood-brain barrier permeability: ability of a compound to cross the blood-brain barrier',
     'active_value': 1,
-    'inactive_value': 0
+    'inactive_value': 0,
+    'active_label': 'Permeable (P)',
+    'inactive_label': 'Non-permeable (NP)'
 })
 properties = spark.createDataFrame([("0", data_json)], ["pid", "data"])
 properties.write.mode("overwrite").parquet("staging/BBBP/properties.parquet")
 
 # Activities table
-bbbp_with_ids = bbbp_with_inchi.withColumn("aid", F.col("sid")) \
+bbbp_with_ids = bbbp_with_inchi.withColumn("aid", F.monotonically_increasing_id().cast('string')) \
                                .withColumn("pid", F.lit("0")) \
                                .withColumn("source", F.lit("BBBP")) \
                                .withColumnRenamed("p_np", "value")
 activity_table = bbbp_with_ids.select("aid", "pid", "sid", "smiles", "inchi", "source", "value")
 activity_table.write.mode("overwrite").parquet("staging/BBBP/activities.parquet")
 
-# Clean up
-bbbp_with_inchi.unpersist()

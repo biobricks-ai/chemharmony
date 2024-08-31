@@ -64,8 +64,11 @@ properties_list = []
 for idx, (col_name, description) in enumerate(column_descriptions.items()):
     data_json = json.dumps({
         "property": col_name,
+        "description": description,
         "active_value": 1,
-        "inactive_value": 0
+        "inactive_value": 0,
+        "active_label": "Active",
+        "inactive_label": "Inactive"
     })
     properties_list.append((str(idx), data_json))  # Ensure pid is a string
 
@@ -77,17 +80,18 @@ activities = []
 for idx, col_name in enumerate(column_descriptions.keys()):
     activity_table = tox21_with_inchi.withColumn("pid", F.lit(str(idx))) \
                                      .withColumn("value", F.col(col_name)) \
-                                     .withColumn("aid", F.monotonically_increasing_id().cast("string")) \
                                      .withColumn("source", F.lit("Tox21")) \
-                                     .select("aid", "sid", "pid", "smiles", "inchi", "source", "value")
+                                     .select("sid", "pid", "smiles", "inchi", "source", "value")
     activities.append(activity_table)
 
 final_activity_table = activities[0]
 for activity_table in activities[1:]:
     final_activity_table = final_activity_table.union(activity_table)
 
-# Ensure unique 'aid' by assigning row numbers
-window_spec = Window.orderBy(F.monotonically_increasing_id())
-final_activity_table = final_activity_table.withColumn("aid", row_number().over(window_spec).cast("string"))
+# Generate unique 'aid' for the entire table
+final_activity_table = final_activity_table.withColumn("aid", F.monotonically_increasing_id().cast("string"))
+
+# Reorder columns to have 'aid' first
+final_activity_table = final_activity_table.select("aid", "sid", "pid", "smiles", "inchi", "source", "value")
 
 final_activity_table.write.mode("overwrite").parquet("staging/Tox21/activities.parquet")
