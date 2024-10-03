@@ -83,8 +83,28 @@ stages:
     deps:
     - path: src/80_harmonize.py
       hash: md5
-      md5: 9e788e135713a5dda9ba9ea3f0d1bfd8
-      size: 4688
+      md5: 73b16436df1c6414f99f72d4ba24a634
+      size: 4802
+    - path: staging/BACE
+      hash: md5
+      md5: 1424029b66f785700c5162a1263d4917.dir
+      size: 423688
+      nfiles: 14
+    - path: staging/BBBP
+      hash: md5
+      md5: 0d7dd26826e995bed97f19a5d27bc251.dir
+      size: 519824
+      nfiles: 14
+    - path: staging/CLINTOX
+      hash: md5
+      md5: 7415fae320db788ceb46454fd95867c9.dir
+      size: 561460
+      nfiles: 18
+    - path: staging/Tox21
+      hash: md5
+      md5: 7ca5066470066be15a9a9a839537c98c.dir
+      size: 9333846
+      nfiles: 58
     - path: staging/bindingdb
       hash: md5
       md5: 0b97392b9b6852fd8628c88f470d6d12.dir
@@ -115,6 +135,11 @@ stages:
       md5: 3a12b72d70720aaebee5cee8d87ac2ed.dir
       size: 870745
       nfiles: 3
+    - path: staging/sider
+      hash: md5
+      md5: 319f2ca1e133c9512a784cd36c164524.dir
+      size: 7009689
+      nfiles: 118
     - path: staging/tox21
       hash: md5
       md5: fb36eb67772c0d97eb9a009cdd95fe37.dir
@@ -138,18 +163,18 @@ stages:
     outs:
     - path: brick/activities.parquet
       hash: md5
-      md5: deb617ac806177510d5825b1028b12a6.dir
-      size: 42938502783
+      md5: bb0725f36b02521b0d89b95d65105ea3.dir
+      size: 43690844945
       nfiles: 402
     - path: brick/properties.parquet
       hash: md5
-      md5: f1efdae930dd15941ca0e7555f7efb7c.dir
-      size: 392751804
+      md5: 152597433593a1b907075b1c555c1504.dir
+      size: 392876485
       nfiles: 136
     - path: brick/substances.parquet
       hash: md5
-      md5: 01b2683ff1e37001d69c80c48f069ed7.dir
-      size: 16554687134
+      md5: 6ebc401ccaa459824a2564cbcc4d9d6b.dir
+      size: 16556992979
       nfiles: 402
   dependencies:
     cmd: bash src/0_dependencies.sh
@@ -210,49 +235,114 @@ stages:
     deps:
     - path: brick/properties.parquet
       hash: md5
-      md5: f1efdae930dd15941ca0e7555f7efb7c.dir
-      size: 392751804
+      md5: 152597433593a1b907075b1c555c1504.dir
+      size: 392876485
       nfiles: 136
     - path: src/91_property_categories.py
       hash: md5
-      md5: bd40f47634984509b9d1ff78ebf992b5
-      size: 1811
+      md5: b6e7f9010bfdb9196ee06adb4f8d643a
+      size: 1836
     outs:
     - path: brick/property_categories.parquet
       hash: md5
-      md5: e44c0dcf6e25785040c62cc188eceee0.dir
-      size: 2241662
-      nfiles: 386
+      md5: 60c4ee902cde7505e02a6fd336372e69.dir
+      size: 2405490
+      nfiles: 514
     - path: joblib_cache/assign_categories
       hash: md5
-      md5: 1fda9c4bf408db704cd39fbe1f6614be.dir
-      size: 119040
-      nfiles: 277
+      md5: dd2295ec10832547802111227e87cd64.dir
+      size: 166268
+      nfiles: 381
   build_property_titles:
     cmd: python src/92_llm_property_titles.py
     deps:
     - path: brick/properties.parquet
       hash: md5
-      md5: f1efdae930dd15941ca0e7555f7efb7c.dir
-      size: 392751804
+      md5: 152597433593a1b907075b1c555c1504.dir
+      size: 392876485
       nfiles: 136
     - path: brick/property_categories.parquet
       hash: md5
-      md5: e44c0dcf6e25785040c62cc188eceee0.dir
-      size: 2241662
-      nfiles: 386
+      md5: 60c4ee902cde7505e02a6fd336372e69.dir
+      size: 2405490
+      nfiles: 514
     - path: src/92_llm_property_titles.py
       hash: md5
-      md5: 24621b60ed796df43bf41500458c4fbb
-      size: 1597
+      md5: 2226ff1de0335bb02d542d44307e07da
+      size: 1624
     outs:
     - path: brick/property_titles.parquet
       hash: md5
-      md5: 3637a74d24192f54bab82b53acf3feb0.dir
-      size: 890364
-      nfiles: 386
+      md5: a6985566d777612fc4e7bb4857931742.dir
+      size: 965444
+      nfiles: 514
     - path: joblib_cache/assign_titles
       hash: md5
-      md5: 67d39bdf175d06fd4fe924eca1964e65.dir
-      size: 1046294
-      nfiles: 349
+      md5: 089af199687949064337798f1c7f8b89.dir
+      size: 1318139
+      nfiles: 545
+  BBBP:
+    cmd: python src/13_integrate_BBBP.py
+    deps:
+    - path: src/13_integrate_BBBP.py
+      hash: md5
+      md5: 2efd9f3c7b295a0a4b78d953caf1f245
+      size: 2858
+    outs:
+    - path: staging/BBBP
+      hash: md5
+      md5: 0d7dd26826e995bed97f19a5d27bc251.dir
+      size: 519824
+      nfiles: 14
+  BACE:
+    cmd: python src/14_integrate_BACE.py
+    deps:
+    - path: src/14_integrate_BACE.py
+      hash: md5
+      md5: 6208009ff21865b5e3b8f7e58a8ded78
+      size: 3018
+    outs:
+    - path: staging/BACE
+      hash: md5
+      md5: 1424029b66f785700c5162a1263d4917.dir
+      size: 423688
+      nfiles: 14
+  sider:
+    cmd: python src/15_integrate_sider.py
+    deps:
+    - path: src/15_integrate_sider.py
+      hash: md5
+      md5: dd4a421b3ef3a2376a30328e270a8f33
+      size: 3515
+    outs:
+    - path: staging/sider
+      hash: md5
+      md5: 319f2ca1e133c9512a784cd36c164524.dir
+      size: 7009689
+      nfiles: 118
+  clintox:
+    cmd: python src/16_integrate_clintox.py
+    deps:
+    - path: src/16_integrate_clintox.py
+      hash: md5
+      md5: 25d2651fb918436423af7892679d3fa7
+      size: 4100
+    outs:
+    - path: staging/CLINTOX
+      hash: md5
+      md5: 7415fae320db788ceb46454fd95867c9.dir
+      size: 561460
+      nfiles: 18
+  tox21_12:
+    cmd: python src/17_integrate_tox21_12.py
+    deps:
+    - path: src/17_integrate_tox21_12.py
+      hash: md5
+      md5: 9e1906157ab212c7533699a7148f34a9
+      size: 5337
+    outs:
+    - path: staging/Tox21
+      hash: md5
+      md5: 7ca5066470066be15a9a9a839537c98c.dir
+      size: 9333846
+      nfiles: 58

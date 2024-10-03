@@ -1,9 +1,10 @@
-from src.helper import udf, util
-
 import pyspark.sql 
 import pyspark.sql.types as T
 import pyspark.sql.functions as F
-import glob, pathlib, logging, shutil
+import glob, pathlib, logging, shutil, sys, pathlib
+
+sys.path.append(".")
+from src.helper import udf, util
 
 # SETUP =================================================================
 logging.basicConfig(filename="log/harmonize.log", level=logging.INFO)
@@ -64,7 +65,8 @@ adf1 = spark.read.parquet(f"staging/**/*activities.parquet")\
     .withColumn("source", match_source_udf(F.col("source_split"))) \
     .drop("source_split") \
     .distinct() \
-    .withColumn("binary_value", F.when(F.col("value") == "positive", 1).otherwise(0))
+    .withColumn("binary_value", F.when(F.col("value") == "positive", 1).otherwise(0)) \
+    .select("aid", "sid", "pid", "source", "inchi", "value", "binary_value")
 
 # Build smiles
 inchidf = adf1.select("inchi").distinct().withColumn("smiles", udf.get_inch2smi_udf()(F.col("inchi")))

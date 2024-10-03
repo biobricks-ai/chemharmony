@@ -1,5 +1,5 @@
-import os, json, tqdm, pandas as pd
-
+import os, json, tqdm, pandas as pd, sys
+sys.path.append(".")
 from pyspark.sql import SparkSession, functions as F, types as T
 from src.helper.cache_helper import assign_categories
 

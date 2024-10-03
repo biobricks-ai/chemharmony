@@ -89,5 +89,12 @@ final_activity_table = activities[0].unionAll(activities[1])
 final_activity_table = final_activity_table.withColumn("aid", F.monotonically_increasing_id().cast("string"))
 
 final_activity_table = final_activity_table.select("aid", "sid", "pid", "smiles", "inchi", "source", "value")
-
+final_activity_table = final_activity_table.withColumn("value", F.when(F.col("value") == 0, "negative").otherwise("positive"))
 final_activity_table.write.mode("overwrite").parquet("staging/CLINTOX/activities.parquet")
+
+# add some concise tests to check that some data was created
+for table in ["substances", "properties", "activities"]:
+    df = spark.read.parquet(f"staging/CLINTOX/{table}.parquet")
+    assert df.count() > 0, f"{table.capitalize()} table is empty"
+
+print("All tables exist and contain data.")

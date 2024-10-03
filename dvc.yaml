@@ -68,6 +68,41 @@ stages:
     outs:
       - staging/bindingdb
 
+  BBBP:
+    cmd: python src/13_integrate_BBBP.py
+    deps:
+      - src/13_integrate_BBBP.py
+    outs:
+      - staging/BBBP
+
+  BACE:
+    cmd: python src/14_integrate_BACE.py
+    deps:
+      - src/14_integrate_BACE.py
+    outs:
+      - staging/BACE
+
+  sider:
+    cmd: python src/15_integrate_sider.py
+    deps:
+      - src/15_integrate_sider.py
+    outs:
+      - staging/sider
+
+  clintox:
+    cmd: python src/16_integrate_clintox.py
+    deps:
+      - src/16_integrate_clintox.py
+    outs:
+      - staging/CLINTOX
+
+  tox21_12:
+    cmd: python src/17_integrate_tox21_12.py
+    deps:
+      - src/17_integrate_tox21_12.py
+    outs:
+      - staging/Tox21
+
   harmonize:
     cmd: env/bin/python src/80_harmonize.py
     deps: 
@@ -81,6 +116,11 @@ stages:
       - staging/toxcast
       - staging/toxrefdb
       - staging/toxvaldb
+      - staging/BBBP
+      - staging/BACE
+      - staging/sider
+      - staging/CLINTOX
+      - staging/Tox21
       - src/80_harmonize.py
     outs:
       - brick/substances.parquet

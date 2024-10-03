@@ -74,5 +74,12 @@ final_activity_table = final_activity_table.withColumn("aid", F.monotonically_in
 
 # Reorder columns to have 'aid' and 'pid' in front
 final_activity_table = final_activity_table.select("aid", "pid", "sid", "smiles", "inchi", "value")
-
+final_activity_table = final_activity_table.withColumn("value", F.when(F.col("value") == 0, "negative").otherwise("positive"))
 final_activity_table.write.mode("overwrite").parquet("staging/sider/activities.parquet")
+
+# add some concise tests to check that some data was created
+for table in ["substances", "properties", "activities"]:
+    df = spark.read.parquet(f"staging/sider/{table}.parquet")
+    assert df.count() > 0, f"{table.capitalize()} table is empty"
+
+print("All tables exist and contain data.")

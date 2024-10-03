@@ -62,6 +62,13 @@ cmp_with_ids = cmp_with_inchi.withColumn("aid", F.monotonically_increasing_id().
                              .withColumn("source", F.lit("BACE")) \
                              .withColumnRenamed("Class", "value")
 activity_table = cmp_with_ids.select("aid", "pid", "sid", "smiles", "inchi", "source", "value")
+activity_table = activity_table.withColumn("value", F.when(F.col("value") == 0, "negative").otherwise("positive"))
 activity_table.write.mode("overwrite").parquet("staging/BACE/activities.parquet")
 
+# add some concise tests to check that some data was created
+for table in ["substances", "properties", "activities"]:
+    df = spark.read.parquet(f"staging/BACE/{table}.parquet")
+    assert df.count() > 0, f"{table.capitalize()} table is empty"
+
+print("All tables exist and contain data.")
 

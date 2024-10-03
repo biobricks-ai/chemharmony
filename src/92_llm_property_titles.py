@@ -1,7 +1,9 @@
-import os, json, tqdm, pandas as pd
+import os, json, tqdm, pandas as pd, sys
+sys.path.append(".")
 
-from pyspark.sql import SparkSession, types as T
 from src.helper.cache_helper_titles import assign_titles
+from pyspark.sql import SparkSession, types as T
+
 
 # SET UP ========================================================
 spark = SparkSession.builder.appName("llm_property_titles")\
