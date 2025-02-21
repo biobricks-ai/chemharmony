@@ -8,6 +8,7 @@ mutagenicity
 carcinogenicity
 sub-chronic toxicity
 chronic toxicity
+developmental neurotoxicity
 developmental toxicity
 genotoxicity
 neurotoxicity
@@ -26,6 +27,12 @@ explosive properties
 flammability
 oxidizing properties
 corrosivity
-chemicalstability
+chemical stability
 dermal absorption
+cardiotoxicity
+ototoxicity
+gastrointestinal toxicity
+hematotoxicity
+metabolic toxicity
+endothelial toxicity
 other

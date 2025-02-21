@@ -36,6 +36,6 @@ def assign_titles(prop_json, titles, inmessages = [], attempts = 0, model="gpt-3
     if not title[0]:
         print('title failure: ', title[1])
         messages = messages + [{"role": "user", "content": title[1]}]
-        return assign_titles(prop_data, titles, messages, attempts + 1, model)
+        return assign_titles(prop_json, titles, messages, attempts + 1, model)
     
     return title[1]

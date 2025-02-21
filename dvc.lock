@@ -1,30 +1,19 @@
 schema: '2.0'
 stages:
-  reach:
-    cmd: Rscript src/05_integrate_reach.R
+  dependencies:
+    cmd: bash src/0_dependencies.sh
+  toxvaldb:
+    cmd: Rscript src/01_integrate_toxvaldb.R
     deps:
-    - path: src/05_integrate_reach.R
+    - path: src/01_integrate_toxvaldb.R
       hash: md5
-      md5: f02b60446c6f643dce7ea2e5b92ee444
-      size: 2381
+      md5: ff20ddd1f0f1f6932be0163d2f14c0a8
+      size: 2186
     outs:
-    - path: staging/reach
+    - path: staging/toxvaldb
       hash: md5
-      md5: 3a12b72d70720aaebee5cee8d87ac2ed.dir
-      size: 870745
-      nfiles: 3
-  toxcast:
-    cmd: Rscript src/04_integrate_toxcast.R
-    deps:
-    - path: src/04_integrate_toxcast.R
-      hash: md5
-      md5: 0c489c9ed17f654fe48c220c4d526e8b
-      size: 2043
-    outs:
-    - path: staging/toxcast
-      hash: md5
-      md5: f89bf0b9aff5f2b34cc7af3a5af5b5da.dir
-      size: 20364341
+      md5: 7b4bc01ce5819cbcda24dd7c83e38e8f.dir
+      size: 4410247
       nfiles: 3
   chembl:
     cmd: Rscript src/02_integrate_chembl.R
@@ -39,18 +28,44 @@ stages:
       md5: 8cfb22e2fced099ab8f036cf1a5e841a.dir
       size: 566633526
       nfiles: 3
-  toxvaldb:
-    cmd: Rscript src/01_integrate_toxvaldb.R
+  tox21:
+    cmd: Rscript src/03_integrate_tox21.R
     deps:
-    - path: src/01_integrate_toxvaldb.R
+    - path: src/03_integrate_tox21.R
       hash: md5
-      md5: ff20ddd1f0f1f6932be0163d2f14c0a8
-      size: 2186
+      md5: ebcf0430f64e31af0df615640c4a6725
+      size: 4036
     outs:
-    - path: staging/toxvaldb
+    - path: staging/tox21
       hash: md5
-      md5: 72ab627800c0c81bacbbd842002f42ba.dir
-      size: 4410867
+      md5: fb36eb67772c0d97eb9a009cdd95fe37.dir
+      size: 3595752
+      nfiles: 3
+  toxcast:
+    cmd: Rscript src/04_integrate_toxcast.R
+    deps:
+    - path: src/04_integrate_toxcast.R
+      hash: md5
+      md5: 0c489c9ed17f654fe48c220c4d526e8b
+      size: 2043
+    outs:
+    - path: staging/toxcast
+      hash: md5
+      md5: f89bf0b9aff5f2b34cc7af3a5af5b5da.dir
+      size: 20364341
+      nfiles: 3
+  reach:
+    cmd: Rscript src/05_integrate_reach.R
+    deps:
+    - path: src/05_integrate_reach.R
+      hash: md5
+      md5: f02b60446c6f643dce7ea2e5b92ee444
+      size: 2381
+    outs:
+    - path: staging/reach
+      hash: md5
+      md5: 3a12b72d70720aaebee5cee8d87ac2ed.dir
+      size: 870745
       nfiles: 3
   ice:
     cmd: Rscript src/06_integrate_ice.R
@@ -65,132 +80,6 @@ stages:
       md5: 77350210d42620c3ba6dd5d9d27b6ad5.dir
       size: 17617889
       nfiles: 3
-  tox21:
-    cmd: Rscript src/03_integrate_tox21.R
-    deps:
-    - path: src/03_integrate_tox21.R
-      hash: md5
-      md5: ebcf0430f64e31af0df615640c4a6725
-      size: 4036
-    outs:
-    - path: staging/tox21
-      hash: md5
-      md5: fb36eb67772c0d97eb9a009cdd95fe37.dir
-      size: 3595752
-      nfiles: 3
-  harmonize:
-    cmd: env/bin/python src/80_harmonize.py
-    deps:
-    - path: src/80_harmonize.py
-      hash: md5
-      md5: 73b16436df1c6414f99f72d4ba24a634
-      size: 4802
-    - path: staging/BACE
-      hash: md5
-      md5: 1424029b66f785700c5162a1263d4917.dir
-      size: 423688
-      nfiles: 14
-    - path: staging/BBBP
-      hash: md5
-      md5: 0d7dd26826e995bed97f19a5d27bc251.dir
-      size: 519824
-      nfiles: 14
-    - path: staging/CLINTOX
-      hash: md5
-      md5: 7415fae320db788ceb46454fd95867c9.dir
-      size: 561460
-      nfiles: 18
-    - path: staging/Tox21
-      hash: md5
-      md5: 7ca5066470066be15a9a9a839537c98c.dir
-      size: 9333846
-      nfiles: 58
-    - path: staging/bindingdb
-      hash: md5
-      md5: 0b97392b9b6852fd8628c88f470d6d12.dir
-      size: 916318337
-      nfiles: 3
-    - path: staging/chembl
-      hash: md5
-      md5: 8cfb22e2fced099ab8f036cf1a5e841a.dir
-      size: 566633526
-      nfiles: 3
-    - path: staging/ctdbase
-      hash: md5
-      md5: 6103f9fc41d9324642e6968fdd89049c.dir
-      size: 106098673
-      nfiles: 3
-    - path: staging/ice
-      hash: md5
-      md5: 77350210d42620c3ba6dd5d9d27b6ad5.dir
-      size: 17617889
-      nfiles: 3
-    - path: staging/pubchem
-      hash: md5
-      md5: d6c9e29fa8cf79b31b336619b0213c34.dir
-      size: 24153612575
-      nfiles: 842
-    - path: staging/reach
-      hash: md5
-      md5: 3a12b72d70720aaebee5cee8d87ac2ed.dir
-      size: 870745
-      nfiles: 3
-    - path: staging/sider
-      hash: md5
-      md5: 319f2ca1e133c9512a784cd36c164524.dir
-      size: 7009689
-      nfiles: 118
-    - path: staging/tox21
-      hash: md5
-      md5: fb36eb67772c0d97eb9a009cdd95fe37.dir
-      size: 3595752
-      nfiles: 3
-    - path: staging/toxcast
-      hash: md5
-      md5: f89bf0b9aff5f2b34cc7af3a5af5b5da.dir
-      size: 20364341
-      nfiles: 3
-    - path: staging/toxrefdb
-      hash: md5
-      md5: f998b112338dde65b0ea99b96ec42182.dir
-      size: 155026
-      nfiles: 3
-    - path: staging/toxvaldb
-      hash: md5
-      md5: 72ab627800c0c81bacbbd842002f42ba.dir
-      size: 4410867
-      nfiles: 3
-    outs:
-    - path: brick/activities.parquet
-      hash: md5
-      md5: bb0725f36b02521b0d89b95d65105ea3.dir
-      size: 43690844945
-      nfiles: 402
-    - path: brick/properties.parquet
-      hash: md5
-      md5: 152597433593a1b907075b1c555c1504.dir
-      size: 392876485
-      nfiles: 136
-    - path: brick/substances.parquet
-      hash: md5
-      md5: 6ebc401ccaa459824a2564cbcc4d9d6b.dir
-      size: 16556992979
-      nfiles: 402
-  dependencies:
-    cmd: bash src/0_dependencies.sh
-  pubchem:
-    cmd: python3 src/09_integrate_pubchem.py
-    deps:
-    - path: src/09_integrate_pubchem.py
-      hash: md5
-      md5: 3f9672c02f9205d2211f3ae4cf6b11c2
-      size: 4431
-    outs:
-    - path: staging/pubchem
-      hash: md5
-      md5: d6c9e29fa8cf79b31b336619b0213c34.dir
-      size: 24153612575
-      nfiles: 842
   ctdbase:
     cmd: Rscript src/07_integrate_ctdbase.R
     deps:
@@ -204,6 +93,19 @@ stages:
       md5: 6103f9fc41d9324642e6968fdd89049c.dir
       size: 106098673
       nfiles: 3
+  pubchem:
+    cmd: python3 src/09_integrate_pubchem.py
+    deps:
+    - path: src/09_integrate_pubchem.py
+      hash: md5
+      md5: 3f9672c02f9205d2211f3ae4cf6b11c2
+      size: 4431
+    outs:
+    - path: staging/pubchem
+      hash: md5
+      md5: da2f5a5b42270d2f3f08aebbf4eb56a2.dir
+      size: 24153612575
+      nfiles: 842
   toxrefdb:
     cmd: Rscript src/11_integrate_toxrefdb.R
     deps:
@@ -230,57 +132,6 @@ stages:
       md5: 0b97392b9b6852fd8628c88f470d6d12.dir
       size: 916318337
       nfiles: 3
-  build_property_categories:
-    cmd: python src/91_property_categories.py
-    deps:
-    - path: brick/properties.parquet
-      hash: md5
-      md5: 152597433593a1b907075b1c555c1504.dir
-      size: 392876485
-      nfiles: 136
-    - path: src/91_property_categories.py
-      hash: md5
-      md5: b6e7f9010bfdb9196ee06adb4f8d643a
-      size: 1836
-    outs:
-    - path: brick/property_categories.parquet
-      hash: md5
-      md5: 60c4ee902cde7505e02a6fd336372e69.dir
-      size: 2405490
-      nfiles: 514
-    - path: joblib_cache/assign_categories
-      hash: md5
-      md5: dd2295ec10832547802111227e87cd64.dir
-      size: 166268
-      nfiles: 381
-  build_property_titles:
-    cmd: python src/92_llm_property_titles.py
-    deps:
-    - path: brick/properties.parquet
-      hash: md5
-      md5: 152597433593a1b907075b1c555c1504.dir
-      size: 392876485
-      nfiles: 136
-    - path: brick/property_categories.parquet
-      hash: md5
-      md5: 60c4ee902cde7505e02a6fd336372e69.dir
-      size: 2405490
-      nfiles: 514
-    - path: src/92_llm_property_titles.py
-      hash: md5
-      md5: 2226ff1de0335bb02d542d44307e07da
-      size: 1624
-    outs:
-    - path: brick/property_titles.parquet
-      hash: md5
-      md5: a6985566d777612fc4e7bb4857931742.dir
-      size: 965444
-      nfiles: 514
-    - path: joblib_cache/assign_titles
-      hash: md5
-      md5: 089af199687949064337798f1c7f8b89.dir
-      size: 1318139
-      nfiles: 545
   BBBP:
     cmd: python src/13_integrate_BBBP.py
     deps:
@@ -346,3 +197,152 @@ stages:
       md5: 7ca5066470066be15a9a9a839537c98c.dir
       size: 9333846
       nfiles: 58
+  harmonize:
+    cmd: env/bin/python src/80_harmonize.py
+    deps:
+    - path: src/80_harmonize.py
+      hash: md5
+      md5: ea5eaf447e7f41b6488d1c0687e7b304
+      size: 4856
+    - path: staging/BACE
+      hash: md5
+      md5: 1424029b66f785700c5162a1263d4917.dir
+      size: 423688
+      nfiles: 14
+    - path: staging/BBBP
+      hash: md5
+      md5: 0d7dd26826e995bed97f19a5d27bc251.dir
+      size: 519824
+      nfiles: 14
+    - path: staging/CLINTOX
+      hash: md5
+      md5: 7415fae320db788ceb46454fd95867c9.dir
+      size: 561460
+      nfiles: 18
+    - path: staging/Tox21
+      hash: md5
+      md5: 7ca5066470066be15a9a9a839537c98c.dir
+      size: 9333846
+      nfiles: 58
+    - path: staging/bindingdb
+      hash: md5
+      md5: 0b97392b9b6852fd8628c88f470d6d12.dir
+      size: 916318337
+      nfiles: 3
+    - path: staging/chembl
+      hash: md5
+      md5: 8cfb22e2fced099ab8f036cf1a5e841a.dir
+      size: 566633526
+      nfiles: 3
+    - path: staging/ctdbase
+      hash: md5
+      md5: 6103f9fc41d9324642e6968fdd89049c.dir
+      size: 106098673
+      nfiles: 3
+    - path: staging/ice
+      hash: md5
+      md5: 77350210d42620c3ba6dd5d9d27b6ad5.dir
+      size: 17617889
+      nfiles: 3
+    - path: staging/pubchem
+      hash: md5
+      md5: da2f5a5b42270d2f3f08aebbf4eb56a2.dir
+      size: 24153612575
+      nfiles: 842
+    - path: staging/reach
+      hash: md5
+      md5: 3a12b72d70720aaebee5cee8d87ac2ed.dir
+      size: 870745
+      nfiles: 3
+    - path: staging/sider
+      hash: md5
+      md5: 319f2ca1e133c9512a784cd36c164524.dir
+      size: 7009689
+      nfiles: 118
+    - path: staging/tox21
+      hash: md5
+      md5: fb36eb67772c0d97eb9a009cdd95fe37.dir
+      size: 3595752
+      nfiles: 3
+    - path: staging/toxcast
+      hash: md5
+      md5: f89bf0b9aff5f2b34cc7af3a5af5b5da.dir
+      size: 20364341
+      nfiles: 3
+    - path: staging/toxrefdb
+      hash: md5
+      md5: f998b112338dde65b0ea99b96ec42182.dir
+      size: 155026
+      nfiles: 3
+    - path: staging/toxvaldb
+      hash: md5
+      md5: 7b4bc01ce5819cbcda24dd7c83e38e8f.dir
+      size: 4410247
+      nfiles: 3
+    outs:
+    - path: brick/activities.parquet
+      hash: md5
+      md5: 201df79ce3124f067e69f81806c70a7d.dir
+      size: 42937986535
+      nfiles: 402
+    - path: brick/properties.parquet
+      hash: md5
+      md5: 3bf737bdc6c47d75362759844ad1df48.dir
+      size: 392878118
+      nfiles: 136
+    - path: brick/substances.parquet
+      hash: md5
+      md5: 006c72e1dd1606d7082dae4b51038c1b.dir
+      size: 16556992250
+      nfiles: 402
+  build_property_categories:
+    cmd: python src/91_property_categories.py
+    deps:
+    - path: brick/properties.parquet
+      hash: md5
+      md5: 3bf737bdc6c47d75362759844ad1df48.dir
+      size: 392878118
+      nfiles: 136
+    - path: src/91_property_categories.py
+      hash: md5
+      md5: ead5895a6ceef91ea6b1a8bf67f13418
+      size: 2190
+    outs:
+    - path: brick/property_categories.parquet
+      hash: md5
+      md5: 85860503f4166414df7ae881826361e7.dir
+      size: 2764123
+      nfiles: 456
+    - path: joblib_cache/assign_categories
+      hash: md5
+      md5: afb77dca047740b110a7a2931e434524.dir
+      size: 30358725
+      nfiles: 49445
+  build_property_titles:
+    cmd: python src/92_llm_property_titles.py
+    deps:
+    - path: brick/properties.parquet
+      hash: md5
+      md5: 3bf737bdc6c47d75362759844ad1df48.dir
+      size: 392878118
+      nfiles: 136
+    - path: brick/property_categories.parquet
+      hash: md5
+      md5: 85860503f4166414df7ae881826361e7.dir
+      size: 2764123
+      nfiles: 456
+    - path: src/92_llm_property_titles.py
+      hash: md5
+      md5: 6de714b3a131964d117238f19a466f27
+      size: 1357
+    outs:
+    - path: brick/property_titles.parquet
+      hash: md5
+      md5: df3cdcf4512ca23393eb1b3f1679b451.dir
+      size: 613160
+      nfiles: 130
+    - path: joblib_cache/assign_titles
+      hash: md5
+      md5: 2082ecd9982451cc67e984f288604ca2.dir
+      size: 2036069836
+      nfiles: 15641

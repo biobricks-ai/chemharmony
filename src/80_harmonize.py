@@ -17,7 +17,7 @@ spark = pyspark.sql.SparkSession.builder.appName("Harmonize Script")\
     .config("spark.executor.memoryOverhead", "24g")\
     .getOrCreate()
 
-stgdir = util.mk_empty_dir('staging2')
+stgdir = util.mk_empty_dir('cache/harmonize')
 
 # Define a UDF that checks each part of the split path for a match in the source list
 source = [pathlib.Path(f).name for f in glob.glob("staging/*")]
@@ -28,7 +28,7 @@ def match_source(split_path):
 match_source_udf = F.udf(match_source, T.StringType())
 
 # CREATE PROPERTIES =====================================================
-logging.info("building staging2/properties.parquet")
+logging.info(f"building {stgdir / 'properties.parquet'}")
 
 pdf1 = spark.read.parquet(f"staging/**/*properties.parquet")\
     .withColumn("source_split", F.split(F.input_file_name(), "/")) \
@@ -73,9 +73,9 @@ inchidf = adf1.select("inchi").distinct().withColumn("smiles", udf.get_inch2smi_
 adf2 = adf1.join(inchidf, on="inchi")
 
 # Build pid and sid
-padf = spark.read.parquet((stgdir / "properties.parquet").as_posix()).select('newpid','pid').distinct()
-sadf = spark.read.parquet((stgdir / "substances.parquet").as_posix()).select('newsid','sid').distinct()
-adf3 = adf2.join(sadf, on="sid").join(padf, on="pid").drop('pid','sid')
+padf = spark.read.parquet((stgdir / "properties.parquet").as_posix()).select('source','newpid','pid').distinct()
+sadf = spark.read.parquet((stgdir / "substances.parquet").as_posix()).select('source','newsid','sid').distinct()
+adf3 = adf2.join(sadf, on=["source", "sid"]).join(padf, on=["source", "pid"]).drop('pid','sid')
 
 # Create new md5 based aid
 adf4 = adf3.withColumnRenamed('newpid','pid').withColumnRenamed('newsid','sid')\
