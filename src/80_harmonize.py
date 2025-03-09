@@ -100,5 +100,9 @@ assert spark.read.parquet("brick/activities.parquet").filter(F.col("source") == 
 df = spark.read.parquet("brick/activities.parquet").select('source').distinct().toPandas()
 assert all([s in source for s in df['source']])
 
+# assert that pids are unique
+pids = spark.read.parquet("brick/properties.parquet").select('pid').distinct().toPandas()
+assert len(pids) == spark.read.parquet("brick/properties.parquet").count()
+
 # CLEAN UP ==========================================================================
 shutil.rmtree(stgdir.as_posix())

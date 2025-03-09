@@ -15,7 +15,7 @@ def get_inch2smi_udf():
 
     return F.udf(inchi2smi)
 
-def get_canonicalize_json_udf(max_str_len=400, float_precision=4):
+def get_canonicalize_json_udf(max_str_len=None, float_precision=4):
     def canonicalize_json(json_string):
         def process_value(item):
             if isinstance(item, dict):
@@ -24,7 +24,7 @@ def get_canonicalize_json_udf(max_str_len=400, float_precision=4):
                 return [process_value(element) for element in item if element is not None and element != '' and element != []]
             elif isinstance(item, float):
                 return round(item, float_precision)
-            elif isinstance(item, str) and len(item) > max_str_len:
+            elif isinstance(item, str) and max_str_len is not None and len(item) > max_str_len:
                 return item[:max_str_len] + '...'  # Truncate long strings
             else:
                 return item
