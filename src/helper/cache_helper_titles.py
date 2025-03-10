@@ -1,9 +1,5 @@
-import pathlib, joblib, re, dotenv, os
+import pathlib, re, dotenv, os
 from openai import OpenAI
-
-cachedir = pathlib.Path("./joblib_cache/assign_titles")
-cachedir.mkdir(exist_ok=True)
-memory = joblib.Memory(cachedir, verbose=0)
 
 dotenv.load_dotenv()
 openai = OpenAI(api_key= os.environ["OPENAI_API_KEY"])
@@ -16,8 +12,7 @@ def process_gpt_response(text : str, titles) -> list[(str, str)]:
         return (False, "This title has already been used. choose a more unique and perhaps descriptive title.")
     return (True, title[0])
 
-@memory.cache
-def assign_titles(prop_json, titles, inmessages = [], attempts = 0, model="gpt-3.5-turbo"):
+def assign_titles(prop_json, titles, inmessages = [], attempts = 0, model="gpt-4o"):
     
     if attempts > 3:
         return [("unknown", "too many attempts")]

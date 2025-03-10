@@ -131,21 +131,23 @@ stages:
     cmd: python src/91_property_categories.py
     deps: 
       - brick/properties.parquet
+      - src/resources/property_categories_prompt.txt
+      - src/resources/property_categories.txt
+      - src/helper/cache_helper.py
       - src/91_property_categories.py
     outs:
       - joblib_cache/assign_categories:
           persist: true
-      - brick/property_categories.parquet:
-          persist: true
+      - brick/property_categories.parquet
   
   build_property_titles:
     cmd: python src/92_llm_property_titles.py
     deps: 
       - brick/properties.parquet
       - brick/property_categories.parquet
+      - src/helper/cache_helper_titles.py
       - src/92_llm_property_titles.py
     outs:
       - joblib_cache/assign_titles:
           persist: true
-      - brick/property_titles.parquet:
-          persist: true
+      - brick/property_titles.parquet

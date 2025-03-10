@@ -202,8 +202,8 @@ stages:
     deps:
     - path: src/80_harmonize.py
       hash: md5
-      md5: ea5eaf447e7f41b6488d1c0687e7b304
-      size: 4856
+      md5: 5fe0c9f07abb5f8d891c1c7921c43d3d
+      size: 5052
     - path: staging/BACE
       hash: md5
       md5: 1424029b66f785700c5162a1263d4917.dir
@@ -282,67 +282,83 @@ stages:
     outs:
     - path: brick/activities.parquet
       hash: md5
-      md5: 201df79ce3124f067e69f81806c70a7d.dir
-      size: 42937986535
+      md5: 532da3d2d844b027a7e0f08807486012.dir
+      size: 42938235037
       nfiles: 402
     - path: brick/properties.parquet
       hash: md5
-      md5: 3bf737bdc6c47d75362759844ad1df48.dir
-      size: 392878118
+      md5: fdc19611c78f2cd6b284449ccb0bebea.dir
+      size: 437227796
       nfiles: 136
     - path: brick/substances.parquet
       hash: md5
-      md5: 006c72e1dd1606d7082dae4b51038c1b.dir
-      size: 16556992250
+      md5: 98733688054ba5cac3e6f069c48777f1.dir
+      size: 17071567059
       nfiles: 402
   build_property_categories:
     cmd: python src/91_property_categories.py
     deps:
     - path: brick/properties.parquet
       hash: md5
-      md5: 3bf737bdc6c47d75362759844ad1df48.dir
-      size: 392878118
+      md5: fdc19611c78f2cd6b284449ccb0bebea.dir
+      size: 437227796
       nfiles: 136
     - path: src/91_property_categories.py
       hash: md5
-      md5: ead5895a6ceef91ea6b1a8bf67f13418
-      size: 2190
+      md5: d2daf46bc61c0b6876ce0c4628eb79f5
+      size: 3192
+    - path: src/helper/cache_helper.py
+      hash: md5
+      md5: 986b3b3d69bf9a69d41b825b9af74a40
+      size: 1866
+    - path: src/resources/property_categories.txt
+      hash: md5
+      md5: 805c34e47da479c1cec08c03996550ae
+      size: 721
+    - path: src/resources/property_categories_prompt.txt
+      hash: md5
+      md5: 99c7b0513618d5c0aeb2dafd8dc2d9ba
+      size: 797
     outs:
     - path: brick/property_categories.parquet
       hash: md5
-      md5: 85860503f4166414df7ae881826361e7.dir
-      size: 2764123
-      nfiles: 456
+      md5: 3018a477e01fb53815238de44cb7417e.dir
+      size: 1838132
+      nfiles: 130
     - path: joblib_cache/assign_categories
       hash: md5
-      md5: afb77dca047740b110a7a2931e434524.dir
-      size: 30358725
-      nfiles: 49445
+      md5: b2d21e185a0560f5eda5d970029f9834.dir
+      size: 33299647
+      nfiles: 51871
   build_property_titles:
     cmd: python src/92_llm_property_titles.py
     deps:
     - path: brick/properties.parquet
       hash: md5
-      md5: 3bf737bdc6c47d75362759844ad1df48.dir
-      size: 392878118
+      md5: fdc19611c78f2cd6b284449ccb0bebea.dir
+      size: 437227796
       nfiles: 136
     - path: brick/property_categories.parquet
       hash: md5
-      md5: 85860503f4166414df7ae881826361e7.dir
-      size: 2764123
-      nfiles: 456
+      md5: 3018a477e01fb53815238de44cb7417e.dir
+      size: 1838132
+      nfiles: 130
     - path: src/92_llm_property_titles.py
       hash: md5
-      md5: 6de714b3a131964d117238f19a466f27
-      size: 1357
+      md5: e30d0543c5c3e9ba6640c1cfd3d054bd
+      size: 3837
+    - path: src/helper/cache_helper_titles.py
+      hash: md5
+      md5: 689794954b727cccfdbd8035b50847ff
+      size: 1621
     outs:
     - path: brick/property_titles.parquet
       hash: md5
-      md5: df3cdcf4512ca23393eb1b3f1679b451.dir
-      size: 613160
+      md5: 25ec4e1ae2ccfaa20215bae358c14b3e.dir
+      size: 2653296
       nfiles: 130
     - path: joblib_cache/assign_titles
       hash: md5
-      md5: 2082ecd9982451cc67e984f288604ca2.dir
-      size: 2036069836
-      nfiles: 15641
+      md5: be5caf9c251d823ce25bd40952167163.dir
+      size: 707624
+      nfiles: 7786

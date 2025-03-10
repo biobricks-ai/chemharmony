@@ -56,3 +56,28 @@ df['strength'] = df['strength'].astype(float)
 
 sdf = spark.createDataFrame(df)
 sdf.write.mode("append").parquet("brick/property_categories.parquet")
+
+# TESTING ========================================================
+# Check that each category has sufficient properties
+category_counts = sdf.groupBy("category").count().collect()
+sufficient_categories = [row["category"] for row in category_counts if row["count"] >= 10]
+
+# Log the category counts
+logdir = pathlib.Path('log') / 'build_property_categories.log'
+with open(logdir.as_posix(), 'w') as f:
+    f.write("Category Counts\n")
+    f.write("=" * 50 + "\n")
+    f.write(f"{'Category':<30} {'Count':>10}\n")
+    f.write("-" * 50 + "\n")
+    for row in category_counts:
+        f.write(f"{row['category']:<30} {row['count']:>10}\n")
+    f.write("=" * 50 + "\n")
+
+# Check if there are enough categories
+if len(sufficient_categories) < 10:
+    error_msg = f"ERROR: Only {len(sufficient_categories)} categories have 10 or more properties. Need at least 10 categories."
+    print(error_msg)
+    raise ValueError(error_msg)
+
+print(f"Found {len(sufficient_categories)} categories with 10+ properties")
+
