@@ -1,0 +1,12 @@
+brick_name: chemharmony
+description: integrated chemical-property-values from many source databases.
+source:
+- name: 'TODO: data source'
+  url: https://example.com
+  citation: TODO
+  license: TODO
+transformations: "None \u2013 raw data preserved.\nTODO: update if processing applied."
+assets:
+- file: TODO.ext
+  format: TODO
+  description: TODO
