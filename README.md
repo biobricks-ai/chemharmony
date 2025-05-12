@@ -115,6 +115,45 @@ df_1 = pd.read_parquet(paths.TODO_ext)
 print(df_1.head())      # Preview the first asset
 
 ## Additional Information
+# chemharmony
+
+## 🔍 Overview
+integrated chemical-property-values from many source databases.
+
+## 📦 Data Source
+
+- **TODO: data source**  
+  URL: [https://example.com](https://example.com)
+  <br>Citation: TODO
+  <br>License: TODO
+
+
+## 🔄 Transformations
+None – raw data preserved.
+TODO: update if processing applied.
+
+## 📁 Assets
+
+- `TODO.ext` (TODO): TODO
+
+
+## 🧪 Usage
+```bash
+biobricks install chemharmony
+
+import biobricks as bb
+import pandas as pd
+
+paths = bb.assets("chemharmony")
+
+# Available assets:
+
+df_1 = pd.read_parquet(paths.TODO_ext)
+
+
+print(df_1.head())      # Preview the first asset
+
+## Additional Information
 # chemharmony - a large scale chemical activity store
 Chemharmony merges many chemical databases in a single set of a 3 tables:
 
